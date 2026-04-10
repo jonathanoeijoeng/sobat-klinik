@@ -21,28 +21,11 @@
                     {{ __('Dashboard') }}
                 </flux:sidebar.item>
 
-                {{-- Patient --}}
-                <div x-data="{ open: @js(request()->routeIs('patients.*')) }">
-                    <flux:sidebar.item icon="users" @click.prevent="open = !open" class="cursor-pointer"
-                        :current="request()->routeIs('dashboard.*')">
-                        <div class="flex items-center justify-between w-full">
-                            <span>{{ __('Pasien') }}</span>
-                            <flux:icon name="chevron-down" variant="micro" class="transition-transform duration-200"
-                                x-bind:class="open ? 'rotate-180' : ''" />
-                        </div>
-                    </flux:sidebar.item>
+                <flux:sidebar.item icon="users" :href="route('patients.index')"
+                    :current="request()->routeIs('patients.index')" wire:navigate>
+                    {{ __('Pasien') }}
+                </flux:sidebar.item>
 
-                    <div x-show="open" x-collapse class="pl-10 mt-1 space-y-1">
-                        <flux:sidebar.item :href="route('patients.register')"
-                            :current="request()->routeIs('patients.register')" wire:navigate size="sm">
-                            {{ __('Register') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item :href="route('patients.visit')"
-                            :current="request()->routeIs('patients.visit')" wire:navigate size="sm">
-                            {{ __('Kunjungan') }}
-                        </flux:sidebar.item>
-                    </div>
-                </div>
             </flux:sidebar.group>
         </flux:sidebar.nav>
 

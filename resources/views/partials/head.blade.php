@@ -5,7 +5,7 @@
     {{ filled($title ?? null) ? $title . ' - ' . config('app.name', 'Laravel') : config('app.name', 'Laravel') }}
 </title>
 
-<link rel="icon" href="{{ asset('logo/favicon.svg') }}" sizes="any">
+<link rel="icon" href="/logo/favicon.png" sizes="any">
 {{-- <link rel="icon" href="/favicon.svg" type="image/svg+xml"> --}}
 <link rel="apple-touch-icon" href="{{ asset('logo/apple-touch-icon.png') }}">
 
