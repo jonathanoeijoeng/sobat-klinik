@@ -21,9 +21,38 @@
                     {{ __('Dashboard') }}
                 </flux:sidebar.item>
 
-                <flux:sidebar.item icon="users" :href="route('patients.index')"
-                    :current="request()->routeIs('patients.index')" wire:navigate>
+
+                <flux:sidebar.item :href="route('patients.index')" :current="request()->routeIs('patients.index')"
+                    wire:navigate>
+                    <x-slot name="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" class="lucide lucide-users-icon lucide-users">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <path d="M16 3.128a4 4 0 0 1 0 7.744" />
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                            <circle cx="9" cy="7" r="4" />
+                        </svg>
+                    </x-slot>
+
                     {{ __('Pasien') }}
+                </flux:sidebar.item>
+
+                <flux:sidebar.item :href="route('in-patient.index')" :current="request()->routeIs('in-patient.index')"
+                    wire:navigate>
+                    <x-slot name="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" class="lucide lucide-hospital-icon lucide-hospital">
+                            <path d="M12 7v4" />
+                            <path d="M14 21v-3a2 2 0 0 0-4 0v3" />
+                            <path d="M14 9h-4" />
+                            <path d="M18 11h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h2" />
+                            <path d="M18 21V5a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16" />
+                        </svg>
+                    </x-slot>
+
+                    {{ __('Rawat Jalan') }}
                 </flux:sidebar.item>
 
             </flux:sidebar.group>
