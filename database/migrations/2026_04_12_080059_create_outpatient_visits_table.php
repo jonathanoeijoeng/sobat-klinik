@@ -24,6 +24,7 @@ return new class extends Migration
 
             // Integrasi SATUSEHAT
             $table->string('satusehat_encounter_id')->nullable()->index();
+            $table->text('complaint')->nullable();
 
             // Timestamp untuk TAT
             $table->timestamp('arrived_at')->nullable();     // Jam Daftar

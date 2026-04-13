@@ -26,8 +26,11 @@ new class extends Component {
 
 <div>
     <x-header header="Daftar Pasien" description="List pasien yang sudah terdaftar di sistem" />
-    <x-input wire:model.live.debounce.100ms="search" name="search" placeholder="Cari pasien..."
-        class="mb-4 md:max-w-lg w-full" />
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <x-input wire:model.live.debounce.100ms="search" name="search" placeholder="Cari pasien..."
+            class="mb-4 md:max-w-lg w-full" />
+        <x-button wire:click="openModal" class="mb-4" color="brand">Registrasi Baru</x-button>
+    </div>
     <div class="border rounded-lg overflow-x-auto shadow-sm -mx-4 px-4 md:mx-0 md:px-0">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-brand-500">

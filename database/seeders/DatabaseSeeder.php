@@ -24,7 +24,8 @@ class DatabaseSeeder extends Seeder
             OrganizationSeeder::class,
             PatientSeeder::class,
             PractitionerSeeder::class,
-            LocationSeeder::class
+            LocationSeeder::class,
+            Icd10sSeeder::class,
         ]);
     }
 }

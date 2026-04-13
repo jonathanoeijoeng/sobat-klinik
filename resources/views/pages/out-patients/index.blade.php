@@ -69,11 +69,11 @@ new class extends Component {
                     'location_id' => $this->location_id,
                     'status' => 'waiting',
                     'arrived_at' => now(),
+                    'complaint' => $this->complaint,
                 ]);
 
                 // Simpan Data Pemeriksaan Awal (Tanda Vital)
                 $visit->vitalSign()->create([
-                    'complaint' => $this->complaint,
                     'systole' => $this->systole,
                     'diastole' => $this->diastole,
                     'weight' => $this->weight,

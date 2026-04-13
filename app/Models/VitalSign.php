@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class VitalSign extends Model
 {
-    protected $fillable = ['visit_id', 'systole', 'diastole', 'weight', 'height', 'temperature'];
+    // protected $fillable = ['visit_id', 'systole', 'diastole', 'weight', 'height', 'temperature'];
+    protected $guarded = [];
 
     public function visit()
     {

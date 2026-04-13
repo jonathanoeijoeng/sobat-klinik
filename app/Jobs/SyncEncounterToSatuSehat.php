@@ -39,6 +39,13 @@ class SyncEncounterToSatuSehat implements ShouldQueue
     {
         // Kirim Encounter (Arrived)
         // Cukup kirim objek modelnya saja
+        if ($this->visit->satusehat_encounter_id) {
+            if ($this->visit->vitalSign) {
+                SyncObservationVitalSign::dispatch($this->visit);
+            }
+            return;
+        }
+
         $response = $service->createEncounter($this->visit);
 
         if ($response->successful()) {
@@ -48,15 +55,18 @@ class SyncEncounterToSatuSehat implements ShouldQueue
             $this->visit->update([
                 'satusehat_encounter_id' => $encounterId,
             ]);
+
+            // LANGSUNG KIRIM VITAL SIGNS SETELAH ENCOUNTER SUKSES
+    // Pastikan Anda sudah membuat Job SyncObservationVitalSign
+            if ($this->visit->vitalSign) {
+                SyncObservationVitalSign::dispatch($this->visit);
+            }
+
+            // EncounterSynced::dispatch($this->visit);
             
             Log::info("Encounter ID berhasil disimpan: " . $encounterId);
         } else {
             Log::error("SATUSEHAT Error: " . $response->body());
         }
-            
-            // // Opsional: Kirim Observation (Vital Signs) jika datanya ada
-            // if ($this->visit->systole && $this->visit->diastole) {
-            //     $service->createObservationBloodPressure($this->visit);
-            // }
     }
 }
