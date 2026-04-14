@@ -71,9 +71,50 @@ class SatuSehatService
         });
     }
 
-    /**
-     * Create Encounter (Rawat Jalan / AMB)
-     */
+    public function getPatientByNik($nik)
+    {
+        $token = $this->getToken();
+        $response = Http::withToken($token)
+            ->get(config('services.satusehat.base_url') . "/Patient", [
+                'identifier' => "https://fhir.kemkes.go.id/id/nik|$nik"
+            ]);
+
+        $data = $response->json();
+
+        // Pastikan 'entry' ada dan tidak kosong
+        if (!isset($data['entry']) || count($data['entry']) === 0) {
+            return ['success' => false, 'message' => 'NIK tidak ditemukan.'];
+        }
+
+        $entries = $data['entry'] ?? [];
+
+        $bestMatch = collect($entries)->first(function ($entry) {
+            $res = $entry['resource'] ?? [];
+            $id = $res['id'] ?? '';
+            
+            // Kriteria: Harus Resource Patient, Status Active, dan (Opsional) Awalan P
+            return ($res['resourceType'] ?? '') === 'Patient' && 
+                ($res['active'] ?? false) === true && 
+                str_starts_with($id, 'P');
+        });
+
+        // Fallback: Jika kriteria ketat tidak ketemu, cari yang penting ada ID P-nya
+        if (!$bestMatch) {
+            $bestMatch = collect($entries)->first(function ($entry) {
+                return str_starts_with($entry['resource']['id'] ?? '', 'P');
+            });
+        }
+
+        $resource = $bestMatch['resource'] ?? ($entries[0]['resource'] ?? null);
+
+        return [
+            'success' => true,
+            'satusehat_id' => $resource['id'] ?? null, // Ini akan mengambil "P02478375538"
+            'name' => $resource['name'][0]['text'] ?? 'Nama Tidak Tersedia',
+            'birth_date' => $resource['birthDate'] ?? null,
+            'gender' => $resource['gender'] ?? null,
+        ];
+    }
     public function createEncounter($visit)
     {
         $token = $this->getToken();

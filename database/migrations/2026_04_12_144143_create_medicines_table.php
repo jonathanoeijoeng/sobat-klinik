@@ -18,7 +18,8 @@ return new class extends Migration
             $table->string('display_name');
             $table->string('form_type')->nullable(); // Tablet, Sirup, dll
             $table->string('manufacturer')->nullable();
-            $table->string('fix_price')->nullable();
+            $table->decimal('fix_price', 15, 2)->default(0);
+            $table->decimal('het_price', 15, 2)->default(5000);
             $table->string('satusehat_medication_id')->nullable();
             $table->timestamp('last_synced_at')->nullable();
             $table->timestamps();

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('sip')->nullable(); // Nomor Izin Praktik
             $table->enum('profession_type', ['doctor', 'nurse', 'midwife', 'pharmacist', 'other'])->default('doctor');
             $table->boolean('is_active')->default(true);
+            $table->decimal('fee', 15, 2)->default(0);
             $table->timestamps();
         });
     }

@@ -8,6 +8,38 @@ new class extends Component {
     public $searchQuery = '';
     public $kfaResults = [];
     public $showModal = false;
+    public $showEditModal = false;
+    public $het_price;
+    public $editingId = null;
+
+    public function edit($id)
+    {
+        // Logika untuk edit obat (bisa buka modal dengan data obat yang dipilih)
+        $medicine = Medicine::findOrFail($id);
+        $this->showEditModal = true;
+        $this->het_price = $medicine->het_price;
+        $this->editingId = $id;
+
+        // Implementasi edit sesuai kebutuhan, misal buka modal dengan data $medicine
+    }
+
+    public function updateHarga()
+    {
+        // Logika untuk menyimpan perubahan harga obat
+        if ($this->editingId) {
+            $medicine = Medicine::findOrFail($this->editingId);
+            $medicine->update(['het_price' => $this->het_price]);
+            $this->dispatch('notify', message: 'Harga obat berhasil diperbarui!', type: 'success');
+        }
+        $this->closeModal();
+    }
+
+    public function closeModal()
+    {
+        $this->showModal = false;
+        $this->showEditModal = false;
+        $this->reset('het_price', 'editingId');
+    }
 
     public function updatedSearchQuery()
     {
@@ -107,43 +139,40 @@ new class extends Component {
     </div>
 
     <div class="border rounded-lg overflow-x-auto shadow-sm -mx-4 px-4 md:mx-0 md:px-0">
-        <table class="min-w-full divide-y divide-gray-200">
+        <table class="max-w-full divide-y divide-gray-200">
             <thead class="bg-brand-500">
                 <tr>
-                    <th
-                        class="w-px whitespace-nowrap px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-widest">
+                    <th class=" px-6 py-4 text-left text-sm font-bold text-white uppercase">
                         Nama Obat
                     </th>
-                    <th
-                        class="w-px whitespace-nowrap px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-widest">
+                    <th class=" px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-widest">
                         Kode KFA</th>
-                    <th
-                        class="w-px whitespace-nowrap px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
+                    <th class="w-px px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
                         SatuSehat ID</th>
-                    <th
-                        class="w-px whitespace-nowrap px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
+                    <th class=" px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
                         Pabrikan</th>
-                    <th
-                        class="w-px whitespace-nowrap px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
-                        Status</th>
+                    <th class=" px-6 py-4 text-right text-sm font-bold text-white uppercase tracking-widest">
+                        Price</th>
                     <th class="px-12 py-4 text-right text-sm font-bold text-white uppercase tracking-widest">Aksi</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @foreach ($medicines as $medicine)
-                    <tr>
-                        <td class="w-px whitespace-nowrap px-6 py-4">
+                    <tr class="w-fit">
+                        <td class="px-6 py-4">
                             <div class=" text-gray-900">{{ $medicine->name }}</div>
                         </td>
-                        <td class="w-px whitespace-nowrap px-6 py-4">
+                        <td class=" px-6 py-4">
                             <div class=" text-gray-900">{{ $medicine->kfa_code }}</div>
                         </td>
-                        <td class="w-px whitespace-nowrap px-6 py-4 text-center text-sm">
+                        <td class=" px-6 py-4 text-center text-sm truncate">
                             {{ $medicine->satusehat_medication_id }}</td>
-                        <td class="w-px whitespace-nowrap px-6 py-4 text-center text-sm">
+                        <td class=" px-6 py-4 text-center text-sm">
                             {{ $medicine->manufacturer }}</td>
+                        <td class=" px-6 py-4 text-right font-mono text-sm">
+                            {{ number_format($medicine->het_price, 0, ',', '.') }}</td>
                         <td class="px-12 py-4 text-right text-sm">
-                            <button class="text-blue-600 hover:text-blue-900">Detail</button>
+                            <x-edit wire:click="edit({{ $medicine->id }})" />
                         </td>
                     </tr>
                 @endforeach
@@ -187,6 +216,43 @@ new class extends Component {
                         <button @click="open = false" class="text-gray-500 text-sm">Tutup</button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Edit Modal --}}
+    <div x-data="{ isOpen: @entangle('showEditModal') }" x-show="isOpen" @keydown.escape.window="isOpen = false"
+        class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
+
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div @click.away="isOpen = false"
+                class="relative bg-white dark:bg-zinc-800 w-full max-w-md rounded-2xl shadow-xl overflow-hidden transform transition-all">
+
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold dark:text-white uppercase tracking-widest">
+                            Edit Harga Obat
+                        </h3>
+                    </div>
+
+                    <div class="space-y-4">
+                        {{-- Menggunakan Komponen Reusable --}}
+                        <x-input label="Harga Obat" name="het_price" wire:model="het_price" />
+                    </div>
+                </div>
+                <form wire:submit.prevent="save">
+
+                    <div class="p-4 bg-gray-50 dark:bg-zinc-800/50 flex justify-end gap-3">
+                        <x-button variant="zinc" type="submit" wire:click="closeModal">
+                            Cancel
+                        </x-button>
+                        <x-button variant="brand" wire:click="updateHarga" loading="save">
+                            Save
+                        </x-button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

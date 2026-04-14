@@ -15,5 +15,6 @@ class Practitioner extends Model
         'sip',
         'profession_type',
         'is_active',
+        'fee',
     ];
 }

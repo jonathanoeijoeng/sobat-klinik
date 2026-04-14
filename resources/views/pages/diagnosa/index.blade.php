@@ -9,6 +9,8 @@ use App\Models\OutPatientDiagnosis;
 use App\Models\Medicine;
 use App\Services\SatuSehatService;
 use App\Models\Prescription;
+use Illuminate\Support\Facades\DB;
+use App\Models\Invoice;
 
 new class extends Component {
     public OutpatientVisit $visit;
@@ -187,7 +189,7 @@ new class extends Component {
                     'display' => $item['nama_dagang'] ?? $name,
                     'form' => $item['dosage_form']['name'] ?? 'Obat',
                     'manufacturer' => $item['manufacturer'] ?? null,
-                    'fix_price' => $item['fix_price'] ?? null,
+                    'fix_price' => $item['fix_price'] ?? 0,
                 ];
             })
             ->sortBy('score') // Semakin kecil posisi (0 = di depan), semakin atas
@@ -287,11 +289,39 @@ new class extends Component {
             $resEncounter = $service->updateEncounterStatusAndDiagnosis($this->visit, 'finished');
 
             if (isset($resEncounter['id'])) {
-                // Baru update database lokal ke finished
-                $this->visit->update([
-                    'status' => 'finished',
-                    'finished_at' => now(),
-                ]);
+                // Menambahkan logika untuk update invoice setelah encounter selesai
+                DB::transaction(function () {
+                    // 1. Update Status Visit (Seperti sebelumnya)
+                    $this->visit->update([
+                        'status' => 'finished',
+                        'finished_at' => now(),
+                    ]);
+
+                    // 2. Load relasi agar tidak lambat (Eager Loading)
+                    $this->visit->load('prescriptions.medicine');
+
+                    // 3. Hitung TOTAL kumulatif dari semua obat
+                    $totalMedicineFee = $this->visit->prescriptions->reduce(function ($carry, $prescription) {
+                        $price = $prescription->medicine->het_price ?? 0;
+                        $qty = $prescription->quantity ?? 0;
+
+                        // Menambahkan (Harga x Qty) ke total sebelumnya
+                        return $carry + $price * $qty;
+                    }, 0);
+
+                    // 4. Update ke tabel Invoice
+                    $invoice = Invoice::where('visit_id', $this->visit->id)->first();
+
+                    if ($invoice) {
+                        $doctorFee = $this->visit->practitioner->fee ?? 0;
+
+                        $invoice->update([
+                            'doctor_fee' => $doctorFee,
+                            'medicine_total' => $totalMedicineFee,
+                            'grand_total' => $doctorFee + $totalMedicineFee + $invoice->registration_fee, // Total tagihan akhir
+                        ]);
+                    }
+                });
 
                 $this->dispatch('notify', message: 'Data tersinkron dan kunjungan selesai!', type: 'success');
                 return redirect()->route('out-patients.index');

@@ -53,7 +53,7 @@ new class extends Component {
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Pasien</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">SATUSEHAT ID</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status Invoice
+                        <th class="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Invoice
                         </th>
                     </tr>
                 </thead>
@@ -75,9 +75,9 @@ new class extends Component {
                                 @endif
                             </td>
                             <td class="px-5 py-4 text-sm capitalize">{{ $visit->status }}</td>
-                            <td class="px-5 py-4 text-sm">
+                            <td class="px-5 py-4 text-sm text-right">
                                 <span
-                                    class="px-2 py-1 rounded text-xs {{ $visit->invoice->payment_status === 'paid' ? 'bg-green-200' : 'bg-red-200' }}">
+                                    class="px-2 py-1 rounded text-xs font-mono text-right {{ $visit->invoice->payment_status === 'paid' ? 'bg-green-200' : 'bg-red-200' }}">
                                     IDR {{ number_format($visit->invoice->grand_total, 0, '.', ',') }}
                                 </span>
                             </td>
