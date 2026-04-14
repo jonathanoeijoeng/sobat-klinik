@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use App\Models\OutpatientVisit;
+use App\Models\Diagnosis;
+use App\Models\Prescription;
+use App\Models\Medicine;
 
 
 class SatuSehatService
@@ -78,6 +81,8 @@ class SatuSehatService
         if (!$token) {
             return false;
         }
+
+        $visit->refresh();
 
         $payload = [
             'resourceType' => 'Encounter',
@@ -298,52 +303,82 @@ class SatuSehatService
                 'size' => 10
             ]);
 
-        if ($response->successful()) {
-            $json = $response->json();
-            // Sesuai dd() kamu: items -> data
-            return $json['items']['data'] ?? [];
-        }
-        return [];
+        return $response->json();
     }
 
-    public function updateEncounterDiagnosis($visit)
+    public function updateEncounterStatusAndDiagnosis($visit, $newStatus)
     {
         $token = $this->getToken();
+        $visit->refresh();
+        $visit->load('diagnoses');
+
         $encounterId = $visit->satusehat_encounter_id;
 
-        // Ambil data Encounter yang sudah ada dulu dari SatuSehat
-        $currentEncounter = Http::withToken($token)
-            ->get(config('services.satusehat.base_url') . "/Encounter/{$encounterId}")
-            ->json();
+        $response = Http::withToken($token)
+            ->get(config('services.satusehat.base_url') . "/Encounter/{$encounterId}");
+        
+        $currentEncounter = $response->json();
+        $now = now()->toIso8601String();
 
-        // Map diagnosa dari DB lokal ke format FHIR
-        $diagnosisPayload = $visit->diagnoses->map(function ($diag, $index) {
+        // 1. FIX Rule 10122: Tutup status lama
+        if (isset($currentEncounter['statusHistory'])) {
+            foreach ($currentEncounter['statusHistory'] as &$history) {
+                if (!isset($history['period']['end'])) {
+                    $history['period']['end'] = $now;
+                }
+            }
+        }
+
+        // 2. Tambahkan status baru ke histori
+        $historyEntry = [
+            "status" => $newStatus,
+            "period" => ["start" => $now]
+        ];
+        
+        // Jika statusnya finished, harus ada period.end
+        if ($newStatus === 'finished') {
+            $historyEntry['period']['end'] = $now;
+        }
+        $currentEncounter['statusHistory'][] = $historyEntry;
+
+        // 3. Update Status Utama
+        $currentEncounter['status'] = $newStatus;
+        if ($newStatus === 'finished') {
+            $currentEncounter['period']['end'] = $now;
+        }
+
+        // 4. LOGIKA KRUSIAL: Isi Diagnosis HANYA jika ada data
+        $diagnosisPayload = $visit->diagnoses->filter(function ($diag) {
+            return !empty($diag->satusehat_condition_id);
+        })->map(function ($diag, $index) {
             return [
                 "condition" => [
-                    "reference" => "Condition/" . $diag->satusehat_condition_id, // Jika Condition sudah di-POST
+                    "reference" => "Condition/" . $diag->satusehat_condition_id,
                     "display" => $diag->name_en
                 ],
                 "use" => [
-                    "coding" => [
-                        [
-                            "system" => "http://terminology.hl7.org/CodeSystem/diagnosis-role",
-                            "code" => ($index === 0) ? "pre-op" : "post-op", // Sesuaikan mapping role-nya
-                            "display" => ($index === 0) ? "Primary Diagnosis" : "Secondary Diagnosis"
-                        ]
-                    ]
+                    "coding" => [[
+                        "system" => "http://terminology.hl7.org/CodeSystem/diagnosis-role",
+                        "code" => ($index === 0) ? "pre-op" : "post-op", 
+                        "display" => ($index === 0) ? "Primary Diagnosis" : "Secondary Diagnosis"
+                    ]]
                 ],
                 "rank" => $index + 1
             ];
-        })->toArray();
+        })->values()->toArray();
 
-        // Masukkan ke payload Encounter
-        $currentEncounter['diagnosis'] = $diagnosisPayload;
+        // Jika ada diagnosa, masukkan ke payload. Jika tidak ada, buang key-nya agar tidak error 10457
+        if (!empty($diagnosisPayload)) {
+            $currentEncounter['diagnosis'] = $diagnosisPayload;
+        } else {
+            unset($currentEncounter['diagnosis']);
+        }
 
-        // Update Encounter di SatuSehat
-        $response = Http::withToken($token)
+        // 5. Kirim Balik
+        $updateResponse = Http::withToken($token)
             ->put(config('services.satusehat.base_url') . "/Encounter/{$encounterId}", $currentEncounter);
 
-        return $response->json();
+        return $updateResponse->json();
     }
 
     public function sendCondition($diagnosis, $visit)
@@ -385,9 +420,10 @@ class SatuSehatService
                 "reference" => "Patient/" . $visit->patient->satusehat_id,
                 "display" => $visit->patient->name
             ],
+            // TIPS: Beberapa dev SatuSehat menyarankan hapus blok encounter di sini 
+            // dan hubungkan HANYA via PUT Encounter diagnosis.
             "encounter" => [
                 "reference" => "Encounter/" . $visit->satusehat_encounter_id,
-                "display" => "Kunjungan Rawat Jalan"
             ],
             "recordedDate" => now()->toIso8601String(),
         ];
@@ -395,89 +431,116 @@ class SatuSehatService
         $response = Http::withToken($token)
             ->post(config('services.satusehat.base_url') . '/Condition', $payload);
 
-        return $response->json();
+        $resJson = $response->json();
+
+        // Pastikan ID disimpan ke DB Intel NUC
+        if (isset($resJson['id'])) {
+            $diagnosis->update(['satusehat_condition_id' => $resJson['id']]);
+        }
+
+        return $resJson;
     }
 
-        public function sendPrescription($prescription, $visit)
-{
-    $token = $this->getToken();
+    public function syncPrescription($prescriptionId)
+    {
+        $prescription = Prescription::with('medicine')->findOrFail($prescriptionId);
+        $medicine = $prescription->medicine;
+        $service = app(SatuSehatService::class);
 
+        // --- STEP 1: AUTO-SYNC MASTER OBAT JIKA BELUM ADA ID ---
+        if (!$medicine->satusehat_medication_id) {
+            // Pastikan kode KFA ada sebelum mencoba sync
+            if (!$medicine->kfa_code) {
+                return $this->dispatch('notify', 
+                    message: "Gagal: Kode KFA untuk {$medicine->name} belum diisi!", 
+                    type: 'error'
+                );
+            }
+
+            $resMed = $service->createMedication($medicine);
+
+            if (isset($resMed['id'])) {
+                // Update tabel medicine di Intel NUC Anda
+                $medicine->update(['satusehat_medication_id' => $resMed['id']]);
+                $medicine->refresh(); // Segarkan data di memory
+            } else {
+                return $this->dispatch('notify', 
+                    message: "Gagal mendaftarkan master obat ke SatuSehat.", 
+                    type: 'error'
+                );
+            }
+        }
+
+        // --- STEP 2: KIRIM MEDICATION REQUEST ---
+        $resRequest = $service->sendMedicationRequest($prescription, $this->visit);
+
+        if (isset($resRequest['id'])) {
+            $prescription->update(['satusehat_request_id' => $resRequest['id']]);
+            $this->dispatch('notify', message: 'Resep berhasil terkirim!', type: 'success');
+        } else {
+            $this->dispatch('notify', 
+                message: 'Gagal kirim resep: ' . ($resRequest['issue'][0]['details']['text'] ?? 'Unknown Error'), 
+                type: 'error'
+            );
+        }
+    }
+
+    public function sendMedicationRequest($prescription, $visit)
+    {
+    
+    $qty = (float) $prescription->quantity;
+    $freq = (int) ($prescription->frequency_per_day ?: 1);
+    
     $payload = [
-        "resourceType" => "MedicationRequest",
-        "status" => "completed", // Sesuaikan jika sudah diberikan bisa 'completed'
-        "intent" => "order",
-        "priority" => "routine",
-        "identifier" => [
-            [
-                "system" => "http://sys-ids.kemkes.go.id/prescription/" . $this->orgSatusehatId,
-                "use" => "official",
-                "value" => "PRES-" . $prescription->id
+            "resourceType" => "MedicationRequest",
+            "identifier" => [
+                [
+                    "system" => "http://sys-ids.kemkes.go.id/prescription/" . $this->organizationId,
+                    "value" => "PRES-" . $prescription->id
+                ]
             ],
-            [
-                "system" => "http://sys-ids.kemkes.go.id/prescription-item/" . $this->orgSatusehatId,
-                "use" => "official",
-                "value" => "PRES-" . $prescription->id . "-1"
-            ]
-        ],
-        "category" => [
-            [
-                "coding" => [
-                    [
-                        "system" => "http://terminology.hl7.org/CodeSystem/medicationrequest-category",
-                        "code" => "outpatient",
-                        "display" => "Outpatient"
+            "status" => "active",
+            "intent" => "order",
+            "category" => [
+                [
+                    "coding" => [
+                        [
+                            "system" => "http://terminology.hl7.org/CodeSystem/medicationrequest-category",
+                            "code" => "outpatient",
+                            "display" => "Outpatient"
+                        ]
                     ]
                 ]
-            ]
-        ],
-        "medicationReference" => [
-            // Jika Anda sudah POST Medication sebelumnya, gunakan ID-nya di sini
-            // Tapi jika belum, kita tetap bisa pakai teknik #contained dengan struktur detail ini
-            "reference" => "Medication/" . $prescription->medicine->satusehat_medication_id, 
-            "display" => $prescription->medicine_name
-        ],
-        "subject" => [
-            "reference" => "Patient/" . $visit->patient->satusehat_id,
-            "display" => $visit->patient->name
-        ],
-        "encounter" => [
-            "reference" => "Encounter/" . $visit->satusehat_encounter_id
-        ],
-        "authoredOn" => $prescription->created_at->format('Y-m-d'), // Contoh Anda pakai format date saja
-        "requester" => [
-            "reference" => "Practitioner/" . $visit->practitioner->satusehat_id,
-            "display" => $visit->practitioner->name
-        ],
-        "reasonCode" => [
-            [
-                "coding" => [
-                    [
-                        "system" => "http://hl7.org/fhir/sid/icd-10",
-                        // Di contoh Anda, alasan (diagnosa) juga dikirimkan di sini
-                        "code" => $visit->diagnoses->first()->icd10_code ?? 'Z00.0',
-                        "display" => $visit->diagnoses->first()->name_en ?? 'General Examination'
-                    ]
-                ]
-            ]
-        ],
-        "dosageInstruction" => [
+            ],
+            "medicationReference" => [
+                // RUJUKAN KE UUID OBAT YANG SUDAH KITA SIMPAN
+                "reference" => "Medication/" . $prescription->medicine->satusehat_medication_id,
+                "display" => $prescription->medicine->name
+            ],
+            "subject" => [
+                "reference" => "Patient/" . $visit->patient->satusehat_id
+            ],
+            "encounter" => [
+                "reference" => "Encounter/" . $visit->satusehat_encounter_id
+            ],
+            "authoredOn" => now()->toIso8601String(),
+            "requester" => [
+                "reference" => "Practitioner/" . $visit->practitioner->satusehat_id
+            ],
+            "dosageInstruction" => [
             [
                 "sequence" => 1,
-                "text" => $prescription->instruction,
+                "text" => $prescription->instruction, // "2x sehari setelah makan"
                 "timing" => [
                     "repeat" => [
-                        "frequency" => 1,
+                        "frequency" => $freq, // Minimal 1
                         "period" => 1,
                         "periodUnit" => "d"
                     ]
                 ],
-                "route" => [
-                    "coding" => [
-                        [
-                            "system" => "http://www.whocc.no/atc",
-                            "code" => "O",
-                            "display" => "Oral"
-                        ]
+                "additionalInstruction" => [
+                    [
+                        "text" => "Setelah makan"
                     ]
                 ],
                 "doseAndRate" => [
@@ -492,38 +555,84 @@ class SatuSehatService
                             ]
                         ],
                         "doseQuantity" => [
-                            "value" => (float) $prescription->quantity,
-                            "unit" => $prescription->uom ?? "TAB",
-                            "system" => "http://terminology.hl7.org/CodeSystem/v3-orderableDrugForm",
-                            "code" => $prescription->uom ?? "TAB"
+                            "value" => $qty, // Pastikan 1.0 atau 1
+                            "unit" => "TAB",
+                            "system" => "http://unitsofmeasure.org",
+                            "code" => "{tablet}" // Gunakan standar UCUM '{tablet}' atau 'TAB'
                         ]
                     ]
                 ]
             ]
-        ],
-        "dispenseRequest" => [
-            "quantity" => [
-                "value" => (float) $prescription->quantity,
-                "unit" => $prescription->uom ?? "TAB",
-                "system" => "http://terminology.hl7.org/CodeSystem/v3-orderableDrugForm",
-                "code" => $prescription->uom ?? "TAB"
-            ],
-            "performer" => [
-                "reference" => "Organization/" . $this->organizationId,
-            ]
-        ]
-    ];
+]
+        ];
 
-    return Http::withToken($token)
-        ->post(config('services.satusehat.base_url') . '/MedicationRequest', $payload)
-        ->json();
-        if ($response->status() === 400) {
-            \Log::error('SatuSehat 400 Payload:', $payload);
-            \Log::error('SatuSehat 400 Response:', $response->json() ?? ['raw' => $response->body()]);
-        }
+        // Logging Payload sebelum dikirim
+        \Log::info("SatuSehat MedicationRequest Payload:", [
+            'url' => config('services.satusehat.base_url') . '/MedicationRequest',
+            'body' => $payload
+        ]);
+
+        return Http::withToken($this->getToken())
+            ->post(config('services.satusehat.base_url') . '/MedicationRequest', $payload)
+            ->json();
+
+        // Logging Response dari SatuSehat
+        \Log::info("SatuSehat MedicationRequest Response:", [
+            'status' => $response->status(),
+            'response' => $result
+        ]);
+
+        return $result;
+    }
+
+    public function createMedication($medicine)
+    {
+        $token = $this->getToken();
         
-        return $response->json();
-}
+        $payload = [
+            "resourceType" => "Medication",
+            "meta" => [
+                "profile" => [
+                    "https://fhir.kemkes.go.id/r4/StructureDefinition/Medication"
+                ]
+            ],
+            "identifier" => [
+                [
+                    "system" => "http://sys-ids.kemkes.go.id/medication/" . $this->organizationId,
+                    "use" => "official",
+                    "value" => (string) $medicine->id // ID obat di database lokal Anda
+                ]
+            ],
+            "code" => [
+                "coding" => [
+                    [
+                        "system" => "http://sys-ids.kemkes.go.id/kfa",
+                        "code" => $medicine->kfa_code, // Kode KFA (misal: 93001019)
+                        "display" => $medicine->name
+                    ]
+                ]
+            ],
+            "status" => "active",
+            "extension" => [
+                [
+                    "url" => "https://fhir.kemkes.go.id/r4/StructureDefinition/MedicationType",
+                    "valueCodeableConcept" => [
+                        "coding" => [
+                            [
+                                "system" => "http://terminology.kemkes.go.id/CodeSystem/medication-type",
+                                "code" => "NC",
+                                "display" => "Non-compound"
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
 
-        // DEBUG: Jika masih 400, kita intip raw body-ny
+        $response = Http::withToken($token)
+            ->post(config('services.satusehat.base_url') . '/Medication', $payload);
+
+        return $response->json();
+    }   
+
 }

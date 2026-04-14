@@ -40,7 +40,7 @@ class SyncObservationVitalSign implements ShouldQueue
         // 2. Eksekusi BP
         $resBp = $service->createObservationBloodPressure($visit);
         if ($resBp && $resBp->successful()) {
-            $updateData['ss_bp_id'] = $resBp->json('id');
+            $updateData['satusehat_observation_blood_pressure_id'] = $resBp->json('id');
         } else {
             Log::error("BP Gagal di SS: " . ($resBp ? $resBp->body() : 'Null Response'));
         }
@@ -48,19 +48,19 @@ class SyncObservationVitalSign implements ShouldQueue
         // 3. Eksekusi Weight & Height (Yang sudah lancar)
         if ($vs->weight) {
             $resW = $service->createSimpleObservation($visit, '29463-7', 'Body weight', $vs->weight, 'kg', 'kg');
-            if ($resW && $resW->successful()) $updateData['ss_weight_id'] = $resW->json('id');
+            if ($resW && $resW->successful()) $updateData['satusehat_observation_weight_id'] = $resW->json('id');
         }
 
         if ($vs->height) {
             $resH = $service->createSimpleObservation($visit, '8302-2', 'Body height', $vs->height, 'cm', 'cm');
-            if ($resH && $resH->successful()) $updateData['ss_height_id'] = $resH->json('id');
+            if ($resH && $resH->successful()) $updateData['satusehat_observation_height_id'] = $resH->json('id');
         }
 
         // 4. Eksekusi Temperature (Gunakan nama kolom baru Anda)
         if ($vs->temperature) {
             $resT = $service->createSimpleObservation($visit, '8310-5', 'Body temperature', $vs->temp, 'Cel', 'Cel');
             if ($resT && $resT->successful()) {
-                $updateData['ss_temperature_id'] = $resT->json('id');
+                $updateData['satusehat_observation_temperature_id'] = $resT->json('id');
             } else {
                 Log::error("Temp Gagal di SS: " . ($resT ? $resT->body() : 'Null Response'));
             }

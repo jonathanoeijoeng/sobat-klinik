@@ -13,6 +13,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Rawat Jalan
     Route::livewire('/out-patients', 'pages::out-patients.index')->name('out-patients.index');
     Route::livewire('/outpatient/{visit}/diagnosis', 'pages::diagnosa.index')->name('outpatient.diagnosis');
+
+    // Settings
+    Route::livewire('/settings/master-obat', 'pages::settings.master-obat')->name('settings.master-obat');
 });
 
 require __DIR__ . '/settings.php';

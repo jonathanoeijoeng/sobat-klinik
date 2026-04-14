@@ -17,6 +17,10 @@ return new class extends Migration
             $table->string('name');
             $table->string('display_name');
             $table->string('form_type')->nullable(); // Tablet, Sirup, dll
+            $table->string('manufacturer')->nullable();
+            $table->string('fix_price')->nullable();
+            $table->string('satusehat_medication_id')->nullable();
+            $table->timestamp('last_synced_at')->nullable();
             $table->timestamps();
         });
     }

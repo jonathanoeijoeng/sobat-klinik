@@ -87,7 +87,7 @@ new class extends Component {
         $diag = OutpatientDiagnosis::find($this->diagnosaId);
 
         // Jangan izinkan hapus jika sudah sinkron ke SatuSehat
-        if ($diag->ss_condition_id) {
+        if ($diag->satusehat_condition_id) {
             $this->dispatch('notify', type: 'error', message: 'Data yang sudah sinkron tidak bisa dihapus!');
             return;
         }
@@ -122,8 +122,34 @@ new class extends Component {
                 'name' => $kfaData['name'],
                 'display_name' => $kfaData['display'] ?? $kfaData['name'],
                 'form_type' => $kfaData['form'] ?? 'Obat',
+                'manufacturer' => $kfaData['manufacturer'] ?? null,
+                'fix_price' => $kfaData['fix_price'] ?? null,
             ],
         );
+
+        if (!$medicine->satusehat_medication_id) {
+            try {
+                $service = app(SatuSehatService::class);
+
+                // Daftarkan obat ke SatuSehat
+                $res = $service->createMedication($medicine);
+
+                if (isset($res['id'])) {
+                    // Simpan UUID yang didapat ke database Intel NUC kamu
+                    $medicine->update([
+                        'satusehat_medication_id' => $res['id'],
+                    ]);
+
+                    $this->dispatch('notify', message: 'Obat berhasil disinkronkan ke SatuSehat.', type: 'success');
+                } else {
+                    // Log error jika API SatuSehat memberikan issue
+                    \Log::error('SatuSehat Medication Error:', $res);
+                    $this->dispatch('notify', message: 'Obat disimpan lokal, tapi gagal sync SatuSehat.', type: 'warning');
+                }
+            } catch (\Exception $e) {
+                \Log::error('Gagal akses API SatuSehat: ' . $e->getMessage());
+            }
+        }
 
         // Isi state untuk form input
         $this->selectedMedicineId = $medicine->id;
@@ -137,7 +163,8 @@ new class extends Component {
     {
         $results = app(SatuSehatService::class)->searchKfa($this->medicineSearch);
 
-        $this->kfaResults = collect($results)
+        $data = $results['items']['data'] ?? [];
+        $this->kfaResults = collect($data)
             ->map(function ($item) {
                 $name = $item['name'] ?? '';
                 $search = strtolower($this->medicineSearch);
@@ -211,48 +238,61 @@ new class extends Component {
     public function syncAllToSatuSehat()
     {
         if (!$this->visit->patient) {
-            $this->dispatch('notify', message: 'Error: Data pasien tidak ditemukan di memori.', type: 'error');
+            $this->dispatch('notify', message: 'Error: Data pasien tidak ditemukan.', type: 'error');
             return;
         }
-        $service = app(SatuSehatService::class);
-        $allConditionsSynced = true;
 
-        // 1. Kirim Diagnosa sebagai 'Condition' satu per satu
+        $service = app(SatuSehatService::class);
+        $allSynced = true;
+
+        // 1. Kirim Diagnosa
         foreach ($this->visit->diagnoses as $diag) {
             if (!$diag->satusehat_condition_id) {
                 $res = $service->sendCondition($diag, $this->visit);
                 if (isset($res['id'])) {
-                    $diag->update(['ss_condition_id' => $res['id']]);
+                    $diag->update(['satusehat_condition_id' => $res['id']]);
+                } else {
+                    $allSynced = false; // Tandai jika ada yang gagal
                 }
             }
         }
 
-        // 3. Kirim Resep (MedicationRequest)
+        // 2. Kirim Resep
         $prescriptions = $this->visit->prescriptions()->whereNull('satusehat_medication_request_id')->get();
-        $successCount = 0;
-
         foreach ($prescriptions as $pres) {
-            $result = $service->sendPrescription($pres, $this->visit);
-
+            $result = $service->sendMedicationRequest($pres, $this->visit);
             if (isset($result['id'])) {
                 $pres->update([
                     'satusehat_medication_request_id' => $result['id'],
-                    'status' => 'pending', // Update status ke farmasi
+                    'status' => 'pending',
                 ]);
-                $successCount++;
+            } else {
+                $allSynced = false; // Tandai jika resep gagal
             }
         }
 
-        $this->sendPrescriptions();
-        $this->visit->refresh();
-        $this->visit->load('diagnoses');
+        // 3. Update Encounter ke 'finished' HANYA jika semuanya sukses
+        if ($allSynced) {
+            $this->visit->refresh();
+            $this->visit->load('diagnoses');
 
-        if ($allConditionsSynced) {
-            $service->updateEncounterDiagnosis($this->visit);
+            $resEncounter = $service->updateEncounterStatusAndDiagnosis($this->visit, 'finished');
+
+            if (isset($resEncounter['id'])) {
+                // Baru update database lokal ke finished
+                $this->visit->update([
+                    'status' => 'finished',
+                    'finished_at' => now(),
+                ]);
+
+                $this->dispatch('notify', message: 'Data tersinkron dan kunjungan selesai!', type: 'success');
+                return redirect()->route('out-patients.index');
+            } else {
+                $this->dispatch('notify', message: 'Gagal update status Encounter ke SatuSehat.', type: 'error');
+            }
         } else {
-            $this->dispatch('notify', message: 'Beberapa diagnosa gagal sinkron. Encounter tidak diupdate.', type: 'error');
+            $this->dispatch('notify', message: 'Ada data yang gagal sinkron. Periksa kembali diagnosa/resep.', type: 'error');
         }
-        // $this->dispatch('notify', message: 'Seluruh data diagnosa dan resep tersinkronisasi.');
     }
 
     public function sendPrescriptions()
@@ -264,7 +304,7 @@ new class extends Component {
 
         foreach ($pendingPrescriptions as $pres) {
             // KIRIM $this->visit ke service supaya data patient aman
-            $result = $service->sendPrescription($pres, $this->visit);
+            $result = $service->sendMedicationRequest($pres, $this->visit);
 
             if (isset($result['id'])) {
                 $pres->update([
@@ -428,7 +468,7 @@ new class extends Component {
                                         </div>
 
                                         <div class="flex items-center gap-2">
-                                            @if ($diag->ss_condition_id)
+                                            @if ($diag->satusehat_condition_id)
                                                 <span
                                                     class="text-[10px] text-green-600 font-bold flex items-center bg-green-50 px-2 py-1 rounded">
                                                     <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">

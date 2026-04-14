@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Transaction;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\SyncEncounterToSatuSehat;
+use App\Services\SatuSehatService;
 
 new class extends Component {
     public $patient_id = 1;
@@ -67,7 +68,7 @@ new class extends Component {
                     'patient_id' => $this->patient_id,
                     'practitioner_id' => $this->practitioner_id,
                     'location_id' => $this->location_id,
-                    'status' => 'waiting',
+                    'status' => 'arrived',
                     'arrived_at' => now(),
                     'complaint' => $this->complaint,
                 ]);
@@ -110,6 +111,25 @@ new class extends Component {
 
         // Opsional: Notifikasi sukses ala Flux/Filament
         // Flux::toast(variant: 'success', text: __('Pasien berhasil didaftarkan dengan nomor ' . $visitNumber));
+    }
+
+    public function startConsultation($visitId)
+    {
+        $visit = OutpatientVisit::findOrFail($visitId);
+        $service = app(SatuSehatService::class);
+
+        // 1. Update jam mulai hanya jika masih kosong (biar tidak tertimpa kalau ke-refresh)
+        if (!$visit->in_progress_at) {
+            $visit->update([
+                'in_progress_at' => now(),
+                'status' => 'in-progress', // Opsional: jika kamu pakai kolom status
+            ]);
+        }
+
+        $service->updateEncounterStatusAndDiagnosis($visit, 'in-progress');
+
+        // 2. Redirect ke halaman diagnosis
+        return redirect()->route('outpatient.diagnosis', $visit->id);
     }
 
     public function render()
@@ -173,7 +193,8 @@ new class extends Component {
                             {{ $visit->complaint }} </td>
                         <td class="px-12 py-4 text-right text-sm font-medium">
                             <a class="text-blue-600 hover:text-blue-900 cursor-pointer"
-                                href="{{ route('outpatient.diagnosis', $visit->id) }}">Input Diagnosa</a>
+                                {{ $visit->status === 'finished' ? 'disabled' : '' }}
+                                wire:click="startConsultation({{ $visit->id }})">{{ $visit->status === 'finished' ? 'Finished' : 'Input Diagnosa' }}</a>
                         </td>
                     </tr>
                 @endforeach

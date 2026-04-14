@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('icd10_code');     // Kode dari tabel ICD-10 lokal Anda
             $table->string('icd10_display');  // Teks deskripsi diagnosis
             $table->boolean('is_primary')->default(false); 
-            $table->string('ss_condition_id')->nullable(); // ID dari SatuSehat
+            $table->string('satusehat_condition_id')->nullable(); // ID dari SatuSehat
             $table->timestamps();
         });
     }

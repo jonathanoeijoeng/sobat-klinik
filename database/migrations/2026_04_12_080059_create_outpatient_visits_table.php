@@ -20,7 +20,7 @@ return new class extends Migration
             $table->foreignId('location_id')->index(); // Poli
 
             // Status Alur Klinik
-            $table->enum('status', ['waiting', 'consulting', 'pharmacy', 'completed', 'cancelled'])->default('waiting');
+            $table->enum('status', ['arrived', 'in-progress', 'pharmacy', 'finished', 'cancelled'])->default('arrive');
 
             // Integrasi SATUSEHAT
             $table->string('satusehat_encounter_id')->nullable()->index();

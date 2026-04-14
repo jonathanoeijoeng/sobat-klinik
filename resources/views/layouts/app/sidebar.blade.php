@@ -64,6 +64,24 @@
         <flux:spacer />
 
         <flux:sidebar.nav>
+            <div x-data="{ open: @js(request()->routeIs('settings.*')) }">
+                <flux:sidebar.item icon="adjustments-vertical" @click.prevent="open = !open" class="cursor-pointer"
+                    :current="request()->routeIs('settings.*')">
+                    <div class="flex items-center justify-between w-full">
+                        <span>{{ __('Settings') }}</span>
+                        <flux:icon name="chevron-down" variant="micro" class="transition-transform duration-200"
+                            x-bind:class="open ? 'rotate-180' : ''" />
+                    </div>
+                </flux:sidebar.item>
+
+                <div x-show="open" x-collapse class="pl-10 mt-1 space-y-1">
+                    <flux:sidebar.item :href="route('settings.master-obat')"
+                        :current="request()->routeIs('settings.master-obat')" wire:navigate size="sm">
+                        {{ __('Master Data Obat') }}
+                    </flux:sidebar.item>
+                </div>
+            </div>
+
             <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire"
                 target="_blank">
                 {{ __('Documentation') }}

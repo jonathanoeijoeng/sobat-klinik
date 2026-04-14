@@ -18,13 +18,13 @@ return new class extends Migration
             
             $table->integer('systole')->nullable();
             $table->integer('diastole')->nullable();
-            $table->string('ss_bp_id')->nullable();
+            $table->string('satusehat_observation_blood_pressure_id')->nullable();
             $table->decimal('weight', 5, 2)->nullable(); // contoh: 120.50
-            $table->string('ss_weight_id')->nullable();
+            $table->string('satusehat_observation_weight_id')->nullable();
             $table->integer('height')->nullable();
-            $table->string('ss_height_id')->nullable();
+            $table->string('satusehat_observation_height_id')->nullable();
             $table->decimal('temperature', 4, 1)->nullable(); // contoh: 36.5
-            $table->string('ss_temperature_id')->nullable();
+            $table->string('satusehat_observation_temperature_id')->nullable();
             $table->timestamps();
         });
     }
