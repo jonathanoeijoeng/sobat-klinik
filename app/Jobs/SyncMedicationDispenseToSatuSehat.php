@@ -30,7 +30,11 @@ class SyncMedicationDispenseToSatuSehat implements ShouldQueue
 
             $res = $service->sendMedicationDispense($pres, $this->visit);
             if (isset($res['id'])) {
-                $pres->update(['satusehat_medication_dispense_id' => $res['id']]);
+                $pres->update([
+                    'satusehat_medication_dispense_id' => $res['id'],
+                    'status' => 'dispensed',
+                    'handed_over_at' => now(),
+                ]);
             }
         }
     }

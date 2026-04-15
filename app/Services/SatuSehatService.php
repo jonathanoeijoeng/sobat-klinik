@@ -7,9 +7,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use App\Models\OutpatientVisit;
-use App\Models\Diagnosis;
 use App\Models\Prescription;
-use App\Models\Medicine;
+
 
 
 class SatuSehatService
@@ -91,10 +90,10 @@ class SatuSehatService
         $bestMatch = collect($entries)->first(function ($entry) {
             $res = $entry['resource'] ?? [];
             $id = $res['id'] ?? '';
-            
+
             // Kriteria: Harus Resource Patient, Status Active, dan (Opsional) Awalan P
-            return ($res['resourceType'] ?? '') === 'Patient' && 
-                ($res['active'] ?? false) === true && 
+            return ($res['resourceType'] ?? '') === 'Patient' &&
+                ($res['active'] ?? false) === true &&
                 str_starts_with($id, 'P');
         });
 
@@ -275,7 +274,7 @@ class SatuSehatService
         return $this->post('Observation', $payload);
     }
 
-        /**
+    /**
      * Helper untuk mengirim observasi tunggal (Weight, Height, Temp, etc)
      */
     public function createSimpleObservation(OutpatientVisit $visit, $code, $display, $value, $unit, $unitCode)
@@ -357,7 +356,7 @@ class SatuSehatService
 
         $response = Http::withToken($token)
             ->get(config('services.satusehat.base_url') . "/Encounter/{$encounterId}");
-        
+
         $currentEncounter = $response->json();
         $now = now()->toIso8601String();
 
@@ -375,7 +374,7 @@ class SatuSehatService
             "status" => $newStatus,
             "period" => ["start" => $now]
         ];
-        
+
         // Jika statusnya finished, harus ada period.end
         if ($newStatus === 'finished') {
             $historyEntry['period']['end'] = $now;
@@ -400,7 +399,7 @@ class SatuSehatService
                 "use" => [
                     "coding" => [[
                         "system" => "http://terminology.hl7.org/CodeSystem/diagnosis-role",
-                        "code" => ($index === 0) ? "pre-op" : "post-op", 
+                        "code" => ($index === 0) ? "pre-op" : "post-op",
                         "display" => ($index === 0) ? "Primary Diagnosis" : "Secondary Diagnosis"
                     ]]
                 ],
@@ -425,7 +424,7 @@ class SatuSehatService
     public function sendCondition($diagnosis, $visit)
     {
         $token = $this->getToken();
-        
+
         $payload = [
             "resourceType" => "Condition",
             "clinicalStatus" => [
@@ -492,8 +491,9 @@ class SatuSehatService
         if (!$medicine->satusehat_medication_id) {
             // Pastikan kode KFA ada sebelum mencoba sync
             if (!$medicine->kfa_code) {
-                return $this->dispatch('toast', 
-                    text: "Gagal: Kode KFA untuk {$medicine->name} belum diisi!", 
+                return $this->dispatch(
+                    'toast',
+                    text: "Gagal: Kode KFA untuk {$medicine->name} belum diisi!",
                     type: 'error'
                 );
             }
@@ -505,8 +505,9 @@ class SatuSehatService
                 $medicine->update(['satusehat_medication_id' => $resMed['id']]);
                 $medicine->refresh(); // Segarkan data di memory
             } else {
-                return $this->dispatch('toast', 
-                    text: "Gagal mendaftarkan master obat ke SatuSehat.", 
+                return $this->dispatch(
+                    'toast',
+                    text: "Gagal mendaftarkan master obat ke SatuSehat.",
                     type: 'error'
                 );
             }
@@ -519,11 +520,12 @@ class SatuSehatService
             $prescription->update([
                 'satusehat_request_id' => $resRequest['id'],
                 'received_at' => now(),
-                ]);
+            ]);
             $this->dispatch('toast', text: 'Resep berhasil terkirim!', type: 'success');
         } else {
-            $this->dispatch('toast', 
-                text: 'Gagal kirim resep: ' . ($resRequest['issue'][0]['details']['text'] ?? 'Unknown Error'), 
+            $this->dispatch(
+                'toast',
+                text: 'Gagal kirim resep: ' . ($resRequest['issue'][0]['details']['text'] ?? 'Unknown Error'),
                 type: 'error'
             );
         }
@@ -531,11 +533,11 @@ class SatuSehatService
 
     public function sendMedicationRequest($prescription, $visit)
     {
-    
-    $qty = (float) $prescription->quantity;
-    $freq = (int) ($prescription->frequency_per_day ?: 1);
-    
-    $payload = [
+
+        $qty = (float) $prescription->quantity;
+        $freq = (int) ($prescription->frequency_per_day ?: 1);
+
+        $payload = [
             "resourceType" => "MedicationRequest",
             "identifier" => [
                 [
@@ -572,42 +574,42 @@ class SatuSehatService
                 "reference" => "Practitioner/" . $visit->practitioner->satusehat_id
             ],
             "dosageInstruction" => [
-            [
-                "sequence" => 1,
-                "text" => $prescription->instruction, // "2x sehari setelah makan"
-                "timing" => [
-                    "repeat" => [
-                        "frequency" => $freq, // Minimal 1
-                        "period" => 1,
-                        "periodUnit" => "d"
-                    ]
-                ],
-                "additionalInstruction" => [
-                    [
-                        "text" => "Setelah makan"
-                    ]
-                ],
-                "doseAndRate" => [
-                    [
-                        "type" => [
-                            "coding" => [
-                                [
-                                    "system" => "http://terminology.hl7.org/CodeSystem/dose-rate-type",
-                                    "code" => "ordered",
-                                    "display" => "Ordered"
+                [
+                    "sequence" => 1,
+                    "text" => $prescription->instruction, // "2x sehari setelah makan"
+                    "timing" => [
+                        "repeat" => [
+                            "frequency" => $freq, // Minimal 1
+                            "period" => 1,
+                            "periodUnit" => "d"
+                        ]
+                    ],
+                    "additionalInstruction" => [
+                        [
+                            "text" => "Setelah makan"
+                        ]
+                    ],
+                    "doseAndRate" => [
+                        [
+                            "type" => [
+                                "coding" => [
+                                    [
+                                        "system" => "http://terminology.hl7.org/CodeSystem/dose-rate-type",
+                                        "code" => "ordered",
+                                        "display" => "Ordered"
+                                    ]
                                 ]
+                            ],
+                            "doseQuantity" => [
+                                "value" => $qty, // Pastikan 1.0 atau 1
+                                "unit" => "TAB",
+                                "system" => "http://unitsofmeasure.org",
+                                "code" => "{tablet}" // Gunakan standar UCUM '{tablet}' atau 'TAB'
                             ]
-                        ],
-                        "doseQuantity" => [
-                            "value" => $qty, // Pastikan 1.0 atau 1
-                            "unit" => "TAB",
-                            "system" => "http://unitsofmeasure.org",
-                            "code" => "{tablet}" // Gunakan standar UCUM '{tablet}' atau 'TAB'
                         ]
                     ]
                 ]
             ]
-]
         ];
 
         // Logging Payload sebelum dikirim
@@ -632,7 +634,7 @@ class SatuSehatService
     public function createMedication($medicine)
     {
         $token = $this->getToken();
-        
+
         $payload = [
             "resourceType" => "Medication",
             "meta" => [
@@ -678,18 +680,32 @@ class SatuSehatService
 
         return $response->json();
     }
-    
-    public function sendMedicationDispense($prescription, $visit)
+
+    public function sendMedicationDispense($prescriptionId)
     {
+        $prescription = Prescription::with(['medicine', 'visit.patient'])->findOrFail($prescriptionId);
+        $visit = $prescription->visit;
+
+        // VALIDASI: Pastikan UUID Pasien ada sebelum kirim
+        if (!$visit->patient->satusehat_uuid) {
+            return ['error' => 'Pasien belum memiliki SatuSehat UUID'];
+        }
+
         $payload = [
             "resourceType" => "MedicationDispense",
+            "identifier" => [
+                [
+                    "system" => "http://sys-ids.kemkes.go.id/medicationdispense/" . config('satusehat.organization_id'),
+                    "value" => "DISP-" . $prescription->id // ID Unik dari DB Lokal kamu
+                ]
+            ],
             "status" => "completed",
             "category" => [
                 [
                     "coding" => [
                         [
-                            "system" => "http://terminology.hl7.org/CodeSystem/medicationdispense-category",
-                            "code" => "outpatient",
+                            "system" => "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                            "code" => "OP",
                             "display" => "Outpatient"
                         ]
                     ]
@@ -715,11 +731,18 @@ class SatuSehatService
                 "system" => "http://unitsofmeasure.org",
                 "code" => $prescription->unit
             ],
+            "daysSupply" => [
+                "value" => (int) $prescription->days, // Pastikan ada kolom days/hari
+                "unit" => "Day",
+                "system" => "http://unitsofmeasure.org",
+                "code" => "d"
+            ],
             "whenPrepared" => now()->toIso8601String(),
             "whenHandedOver" => now()->toIso8601String(),
         ];
 
+        Log::info("Payload MedicationDispense ID: " . $prescription->id, $payload);
+
         return $this->post('/MedicationDispense', $payload);
     }
-
 }

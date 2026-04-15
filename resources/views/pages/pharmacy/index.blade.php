@@ -4,11 +4,15 @@ use Livewire\Component;
 use App\Models\Prescription;
 use App\Models\OutpatientVisit;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Bus;
+use App\Jobs\SyncMedicationDispenseToSatuSehat;
+use App\Jobs\FinalizeVisitJob;
 
 new class extends Component {
     use WithPagination;
 
     public string $search = '';
+    public $visit;
 
     public function updatingSearch()
     {
@@ -17,9 +21,9 @@ new class extends Component {
 
     public function processAll($visitId)
     {
-        $visit = OutpatientVisit::with('prescriptions')->findOrFail($visitId);
+        $this->visit = OutpatientVisit::with('prescriptions')->findOrFail($visitId);
 
-        foreach ($visit->prescriptions as $prescription) {
+        foreach ($this->visit->prescriptions as $prescription) {
             $prescription->update([
                 'status' => 'preparing',
                 'started_at' => now(),
@@ -29,27 +33,28 @@ new class extends Component {
         $this->dispatch('toast', text: 'Semua resep mulai diproses', type: 'info');
     }
 
-    public function sendMedicationDispense($prescriptionId)
+    public function processObat($prescriptionId)
     {
         $prescription = Prescription::findOrFail($prescriptionId);
+        $prescription->update([
+            'status' => 'preparing',
+            'started_at' => now(),
+        ]);
 
-        // Validasi stok obat
-        if ($prescription->medicine->stock < $prescription->quantity) {
-            $this->dispatch('toast', text: 'Stok obat tidak mencukupi!', type: 'error');
-            return;
-        }
+        $this->dispatch('toast', text: 'Obat berhasil diproses', type: 'info');
+    }
 
-        // Update status menjadi dispensed dan kurangi stok
+    public function sendMedicationDispense($prescriptionId)
+    {
+        $prescription = Prescription::with(['medicine', 'visit.patient'])->findOrFail($prescriptionId);
+
+        $this->visit = $prescription->visit;
+        Bus::chain([new SyncMedicationDispenseToSatuSehat($this->visit), new FinalizeVisitJob($this->visit)])->dispatch();
+
         $prescription->update([
             'status' => 'dispensed',
             'handed_over_at' => now(),
         ]);
-
-        $prescription->medicine->decrement('stock', $prescription->quantity);
-
-        // Kirim data ke SatuSehat
-        app(SatuSehatService::class)->sendMedicationDispense($prescription);
-
         $this->dispatch('toast', text: 'Obat berhasil disinkronkan ke SatuSehat.', type: 'success');
     }
 
@@ -102,13 +107,11 @@ new class extends Component {
                         {{ $visit->prescriptions->every('started_at') && !$visit->prescriptions->every('handed_over_at') ? 'Sedang di proses' : 'Perlu Diproses' }}
                     </span>
                     @if ($visit->prescriptions->every('started_at') && !$visit->prescriptions->every('handed_over_at'))
-                        <x-button wire:click="handOverAll({{ $visit->id }})" class="ml-4 text-sm" variant="green">
+                        <x-button wire:click="sendMedicationDispense({{ $visit->id }})" class="ml-4 text-sm"
+                            variant="green">
                             Serahkan ke Pasien
                         </x-button>
                     @else
-                        <x-button wire:click="processAll({{ $visit->id }})" class="ml-4 text-sm" variant="orange">
-                            Proses Semua Obat
-                        </x-button>
                     @endif
                 </div>
             </div>
@@ -133,11 +136,16 @@ new class extends Component {
                                 <td class="px-4 py-3 text-slate-600 italic">{{ $item->instruction }}</td>
                                 <td class="px-4 py-3 text-right">
                                     @if ($item->handed_over_at)
-                                        <span class="text-emerald-600">✔ Diserahkan</span>
+                                        <span class="text-emerald-600">Diserahkan</span>
+                                    @elseif ($item->started_at)
+                                        <button wire:click="sendMedicationDispense({{ $item->id }})"
+                                            class="text-brand-600 hover:underline">
+                                            Serahkan ke Pasien
+                                        </button>
                                     @else
-                                        <button wire:click="processDispense({{ $item->id }})"
-                                            class="text-blue-600 hover:underline">
-                                            Proses
+                                        <button wire:click="processObat({{ $item->id }})"
+                                            class="text-orange-600 hover:underline">
+                                            Serahkan ke Pasien
                                         </button>
                                     @endif
                                 </td>
