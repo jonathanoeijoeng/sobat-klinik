@@ -22,7 +22,7 @@ class PractitionerSeeder extends Seeder
             'sip' => '1234567887654322',
             'profession_type' => 'doctor',
             'is_active' => true,
+            'fee' => 250000,
         ]);
-
     }
 }

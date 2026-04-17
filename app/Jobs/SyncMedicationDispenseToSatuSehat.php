@@ -25,7 +25,7 @@ class SyncMedicationDispenseToSatuSehat implements ShouldQueue
     public function handle(SatuSehatService $service): void
     {
         // Pastikan kita ambil data terbaru dari DB NUC
-        $this->visit->refresh(); 
+        $this->visit->refresh();
 
         foreach ($this->visit->prescriptions as $pres) {
             // 1. Lewati jika sudah pernah sukses dikirim
@@ -41,16 +41,16 @@ class SyncMedicationDispenseToSatuSehat implements ShouldQueue
 
             // 3. Panggil service (Pastikan parameter cuma satu yaitu ID, sesuai method service-mu)
             $res = $service->sendMedicationDispense($pres->id);
-            
+
             if (isset($res['id'])) {
                 $pres->update([
                     'satusehat_medication_dispense_id' => $res['id'],
                     'status' => 'dispensed',
-                    'handed_over_at' => now(),
+                    'dispensed_at' => now(),
                 ]);
             } else {
                 Log::error("API SatuSehat Error untuk Resep " . $pres->id, is_array($res) ? $res : ($res->json() ?? []));
             }
         }
-}
+    }
 }

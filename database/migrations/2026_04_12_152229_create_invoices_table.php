@@ -18,7 +18,7 @@ return new class extends Migration
 
             // Komponen Biaya (IDR)
             $table->decimal('registration_fee', 15, 2)->default(0);
-            $table->decimal('doctor_fee', 15, 2)->default(0);
+            $table->decimal('practitioner_fee', 15, 2)->default(0);
             $table->decimal('medicine_total', 15, 2)->default(0);
             $table->decimal('grand_total', 15, 2)->default(0);
 

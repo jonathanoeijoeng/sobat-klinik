@@ -8,4 +8,8 @@ class Invoice extends Model
 {
     protected $guarded = [];
 
+    public function visit()
+    {
+        return $this->belongsTo(OutpatientVisit::class, 'visit_id');
+    }
 }

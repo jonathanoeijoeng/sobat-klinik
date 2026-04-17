@@ -24,7 +24,7 @@ new class extends Component {
     public $search = '';
     public $medicineSearch = '';
     public $selectedMedicineId;
-    public $qty = 1;
+    public $qty;
     public $instruction = '';
     public $isPrimary = false;
     public $selectedIcd10 = null;
@@ -239,7 +239,7 @@ new class extends Component {
             return;
         }
 
-        if (strlen($value) < 4) {
+        if (strlen($value) < 3) {
             $this->kfaResults = [];
             return;
         }
@@ -286,9 +286,11 @@ new class extends Component {
         $this->visit->prescriptions()->create([
             'medicine_id' => $medicine->id,
             'medicine_name' => $medicine->display_name,
-            'quantity' => $this->qty,
+            'qty_ordered' => $this->qty,
+            'qty_dispensed' => $this->qty, // Asumsikan langsung sesuai pesanan, bisa diupdate nanti oleh farmasi
             'instruction' => $this->instruction,
-            'status' => 'pending',
+            'status' => 'draft',
+            // 'sent_to_pharmacy_at' => now(),
         ]);
 
         // Reset form untuk input obat berikutnya
@@ -311,94 +313,6 @@ new class extends Component {
         $this->visit->load('prescriptions'); // Refresh list resep di bawah
     }
 
-    // public function syncAllToSatuSehat()
-    // {
-    //     if (!$this->visit->patient) {
-    //         $this->dispatch('toast', text: 'Error: Data pasien tidak ditemukan.', type: 'error');
-    //         return;
-    //     }
-
-    //     $service = app(SatuSehatService::class);
-    //     $allSynced = true;
-
-    //     // 1. Kirim Diagnosa
-    //     foreach ($this->visit->diagnoses as $diag) {
-    //         if (!$diag->satusehat_condition_id) {
-    //             $res = $service->sendCondition($diag, $this->visit);
-    //             if (isset($res['id'])) {
-    //                 $diag->update(['satusehat_condition_id' => $res['id']]);
-    //             } else {
-    //                 $allSynced = false; // Tandai jika ada yang gagal
-    //             }
-    //         }
-    //     }
-
-    //     // 2. Kirim Resep
-    //     $prescriptions = $this->visit->prescriptions()->whereNull('satusehat_medication_request_id')->get();
-    //     foreach ($prescriptions as $pres) {
-    //         $result = $service->sendMedicationRequest($pres, $this->visit);
-    //         if (isset($result['id'])) {
-    //             $pres->update([
-    //                 'satusehat_medication_request_id' => $result['id'],
-    //                 'status' => 'pending',
-    //             ]);
-    //         } else {
-    //             $allSynced = false; // Tandai jika resep gagal
-    //         }
-    //     }
-
-    //     // 3. Update Encounter ke 'finished' HANYA jika semuanya sukses
-    //     if ($allSynced) {
-    //         $this->visit->refresh();
-    //         $this->visit->load('diagnoses');
-
-    //         $resEncounter = $service->updateEncounterStatusAndDiagnosis($this->visit, 'finished');
-
-    //         if (isset($resEncounter['id'])) {
-    //             // Menambahkan logika untuk update invoice setelah encounter selesai
-    //             DB::transaction(function () {
-    //                 // 1. Update Status Visit (Seperti sebelumnya)
-    //                 $this->visit->update([
-    //                     'status' => 'finished',
-    //                     'finished_at' => now(),
-    //                 ]);
-
-    //                 // 2. Load relasi agar tidak lambat (Eager Loading)
-    //                 $this->visit->load('prescriptions.medicine');
-
-    //                 // 3. Hitung TOTAL kumulatif dari semua obat
-    //                 $totalMedicineFee = $this->visit->prescriptions->reduce(function ($carry, $prescription) {
-    //                     $price = $prescription->medicine->het_price ?? 0;
-    //                     $qty = $prescription->quantity ?? 0;
-
-    //                     // Menambahkan (Harga x Qty) ke total sebelumnya
-    //                     return $carry + $price * $qty;
-    //                 }, 0);
-
-    //                 // 4. Update ke tabel Invoice
-    //                 $invoice = Invoice::where('visit_id', $this->visit->id)->first();
-
-    //                 if ($invoice) {
-    //                     $doctorFee = $this->visit->practitioner->fee ?? 0;
-
-    //                     $invoice->update([
-    //                         'doctor_fee' => $doctorFee,
-    //                         'medicine_total' => $totalMedicineFee,
-    //                         'grand_total' => $doctorFee + $totalMedicineFee + $invoice->registration_fee, // Total tagihan akhir
-    //                     ]);
-    //                 }
-    //             });
-
-    //             $this->dispatch('toast', text: 'Data tersinkron dan kunjungan selesai!', type: 'success');
-    //             return redirect()->route('out-patients.index');
-    //         } else {
-    //             $this->dispatch('toast', text: 'Gagal update status Encounter ke SatuSehat.', type: 'error');
-    //         }
-    //     } else {
-    //         $this->dispatch('toast', text: 'Ada data yang gagal sinkron. Periksa kembali diagnosa/resep.', type: 'error');
-    //     }
-    // }
-
     public function syncAllToSatuSehat()
     {
         if (!$this->visit->patient) {
@@ -420,6 +334,21 @@ new class extends Component {
             new SyncMedicationRequestToSatuSehat($this->visit),
             // new FinalizeVisitJob($this->visit), // Job baru untuk update status & invoice
         ])->dispatch();
+
+        $this->visit->update([
+            'internal_status' => 'sent_to_pharmacy', // Update internal status juga
+            'sent_to_pharmacy_at' => now(), // Timestamp untuk tracking internal
+        ]);
+
+        Invoice::where('visit_id', $this->visit->id)->update([
+            'practitioner_fee' => $this->visit->practitioner->fee ?? 0,
+            'grand_total' => ($this->visit->practitioner->fee ?? 0) + $this->visit->invoice->registration_fee,
+        ]);
+
+        $this->visit->prescriptions()->update([
+            'status' => 'sent_to_pharmacy',
+            'sent_to_pharmacy_at' => now(),
+        ]);
 
         $this->dispatch('toaster', message: 'Proses sinkronisasi sedang berjalan di background.', type: 'success');
         return redirect()->route('out-patients.index');
@@ -457,11 +386,22 @@ new class extends Component {
             // 1. Ambil semua kode ICD yang sudah diinput untuk kunjungan ini
             $existingCodes = $this->visit->diagnoses()->pluck('icd10_code');
 
-            // 2. Cari ICD-10, tapi kecualikan yang sudah ada di list
-            $icdResults = Icd10::where(function ($query) {
-                $query->where('code', 'ilike', $this->search . '%')->orWhere('name_en', 'ilike', '%' . $this->search . '%');
-            })
-                ->whereNotIn('code', $existingCodes) // Filter di sini
+            // 2. Pecah kata kunci pencarian
+            $keywords = collect(explode(' ', $this->search))->filter();
+
+            $icdResults = Icd10::query()
+                ->where(function ($query) use ($keywords) {
+                    // Cek apakah input pertama mirip kode (misal: A25)
+                    $query
+                        ->where('code', 'ilike', $this->search . '%')
+                        // ATAU cari berdasarkan kumpulan kata di nama
+                        ->orWhere(function ($nameQuery) use ($keywords) {
+                            foreach ($keywords as $word) {
+                                $nameQuery->where('name_en', 'ilike', '%' . $word . '%');
+                            }
+                        });
+                })
+                ->whereNotIn('code', $existingCodes)
                 ->limit(10)
                 ->get();
         }
@@ -543,7 +483,7 @@ new class extends Component {
                         </h4>
 
                         <div class="relative" x-data="{ open: true }">
-                            <x-input type="text" wire:model.live="search" @input="open = true" :disabled="$visit->status === 'finished'"
+                            <x-input type="search" wire:model.live="search" @input="open = true" :disabled="$visit->status === 'finished'"
                                 name="search" placeholder="Ketik kode ICD-10 atau nama penyakit..." name="search" />
 
                             @if (count($icdResults) > 0)
@@ -641,31 +581,50 @@ new class extends Component {
                         Resep Obat (KFA)
                     </h4>
 
-                    <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
-                        {{-- Search Obat --}}
-                        <div class="relative col-span-2" x-data="{ open: false }">
-                            <x-input type="text" wire:model.live.debounce.500ms="medicineSearch" @input="open = true"
-                                @focus="open = true" name="medicineSearch" placeholder="Cari obat di KFA..."
-                                :disabled="$visit->status === 'finished'" />
+                    {{-- Search Obat --}}
+                    <div class="relative col-span-2" x-data="{ open: false }">
+                        <x-input type="search" wire:model.live.debounce.500ms="medicineSearch" @input="open = true"
+                            @focus="open = true" name="medicineSearch"
+                            placeholder="Cari obat di KFA (Nama atau Kode)..." :disabled="$visit->status === 'finished'" />
 
-                            @if (count($kfaResults) > 0)
-                                <div x-show="open" @click.away="open = false"
-                                    class="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-xl overflow-hidden">
-                                    @foreach ($kfaResults as $res)
-                                        {{-- Gunakan kurung siku [] dan panggil method yang benar --}}
-                                        <button wire:click="selectMedicineFromKfa('{{ $res['kfa_code'] }}')"
-                                            @click="open = false" class="w-full text-left px-4 py-3 ...">
-                                            <span class="font-bold text-brand-700">[{{ $res['kfa_code'] }}]</span>
-                                            <span class="text-sm text-gray-700">{{ $res['name'] }}</span>
-                                        </button>
-                                    @endforeach
-                                </div>
-                            @endif
-                        </div>
+                        @if (count($kfaResults) > 0)
+                            <div x-show="open" @click.away="open = false"
+                                class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl overflow-hidden max-h-80 overflow-y-auto">
 
-                        <x-input type="number" wire:model="qty" placeholder="Qty" name="quantity"
+                                @foreach ($kfaResults as $res)
+                                    <button type="button"
+                                        wire:click="selectMedicineFromKfa('{{ $res['kfa_code'] }}')"
+                                        @click="open = false"
+                                        class="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-gray-50 last:border-0 transition-colors duration-150 group">
+                                        <div class="flex flex-col">
+                                            <div class="flex justify-between items-start mb-1">
+                                                <span
+                                                    class="text-[10px] font-mono font-bold px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">
+                                                    {{ $res['kfa_code'] }}
+                                                </span>
+                                                @if (isset($res['manufacturer']))
+                                                    <span
+                                                        class="text-[10px] uppercase tracking-wider font-semibold text-brand-600">
+                                                        {{ $res['manufacturer'] }}
+                                                    </span>
+                                                @endif
+                                            </div>
+
+                                            <span
+                                                class="text-sm font-semibold text-gray-800 group-hover:text-brand-700 leading-tight">
+                                                {{ $res['name'] }}
+                                            </span>
+                                        </div>
+                                    </button>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-4">
+                        <x-input type="number" wire:model="qty" placeholder="Qty" name="qty_ordered"
                             :disabled="$visit->status === 'finished'" />
-                        <div class="col-span-2">
+                        <div class="col-span-3">
                             <x-input type="text" wire:model="instruction" name="instruction"
                                 placeholder="Aturan Pakai" :disabled="$visit->status === 'finished'" />
                         </div>
@@ -682,8 +641,8 @@ new class extends Component {
                         @foreach ($visit->prescriptions as $pres)
                             @php
                                 $statusClasses = match ($pres->status) {
-                                    'pending' => 'border-l-orange-500 bg-orange-50/30',
-                                    'preparing', 'ready' => 'border-l-yellow-400 bg-yellow-50/30',
+                                    'sent_to_pharmacy' => 'border-l-orange-500 bg-orange-50/30',
+                                    'pharmacy_processing', 'sent-for-payment' => 'border-l-yellow-400 bg-yellow-50/30',
                                     'dispensed' => 'border-l-emerald-500 bg-emerald-50/30',
                                     default => 'border-l-gray-300 bg-gray-50',
                                 };
@@ -692,7 +651,8 @@ new class extends Component {
                                 class="flex justify-between items-center p-3 border-l-8 {{ $statusClasses }} border-y border-r rounded-lg shadow-sm transition-colors">
                                 <div>
                                     <span class="font-bold text-gray-800">{{ $pres->medicine->display_name }}</span>
-                                    <span class="text-sm text-gray-500 ml-2">({{ $pres->quantity }}
+                                    <span class="text-sm text-gray-500 ml-2">({{ $pres->qty_ordered }}
+                                        {{ $pres->medicine->unit ?? 'pcs' }} -
                                         {{ $pres->medicine->form_type }})</span>
                                     <p class="text-xs text-red-600 italic">{{ $pres->instruction }}</p>
                                 </div>
@@ -714,11 +674,15 @@ new class extends Component {
                     </div>
                 </div>
                 <div class="mt-4 pt-4 flex justify-end">
-                    <x-button wire:click="syncAllToSatuSehat" wire:loading.attr="disabled" :disabled="$visit->status === 'finished'"
-                        variant="brand">
-                        <span
-                            wire:loading.remove>{{ $visit->status === 'finished' ? 'Synced to SatuSehat' : 'Kirim Diagnosa ke SatuSehat' }}</span>
-                        <span wire:loading>Memproses...</span>
+                    <x-button wire:click="syncAllToSatuSehat" wire:loading.attr="disabled"
+                        wire:target="syncAllToSatuSehat" {{-- TAMBAHKAN INI --}} :disabled="$visit->status === 'finished'" variant="brand">
+                        <span wire:loading.remove wire:target="syncAllToSatuSehat">
+                            {{ $visit->status === 'finished' ? 'Synced to SatuSehat' : 'Kirim Diagnosa ke SatuSehat' }}
+                        </span>
+
+                        <span wire:loading wire:target="syncAllToSatuSehat">
+                            Memproses...
+                        </span>
                     </x-button>
                 </div>
             </div>

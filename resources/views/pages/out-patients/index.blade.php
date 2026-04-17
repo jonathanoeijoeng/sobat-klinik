@@ -81,6 +81,7 @@ new class extends Component {
                     'practitioner_id' => $this->practitioner_id,
                     'location_id' => $this->location_id,
                     'status' => 'arrived',
+                    'internal_status' => 'arrived',
                     'arrived_at' => now(),
                     'complaint' => $this->complaint,
                 ]);
@@ -135,6 +136,8 @@ new class extends Component {
             $visit->update([
                 'in_progress_at' => now(),
                 'status' => 'in-progress', // Opsional: jika kamu pakai kolom status
+                'internal_status' => 'at_practitioner', // Untuk tracking internal
+                'at_practitioner_at' => now(), // Timestamp untuk tracking internal
             ]);
         }
 
@@ -149,7 +152,7 @@ new class extends Component {
         $patients = Patient::all();
         $locations = Location::all();
         $practitioners = Practitioner::all();
-        $outpatientVisits = OutpatientVisit::query()->orderBy('created_at', 'desc')->paginate(25);
+        $outpatientVisits = OutpatientVisit::query()->where('internal_status', 'arrived')->orderBy('created_at', 'desc')->paginate(25);
 
         return $this->view([
             'patients' => $patients,

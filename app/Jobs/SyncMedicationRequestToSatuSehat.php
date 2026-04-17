@@ -33,10 +33,10 @@ class SyncMedicationRequestToSatuSehat implements ShouldQueue
 
         // Kita loop setiap prescription yang belum punya satusehat_id
         foreach ($this->visit->prescriptions as $pres) {
-        // 1. CEK DULU: Jangan tembak API kalau record ini sudah punya ID SatuSehat
-        // Ini kunci untuk menghindari error 20002 saat Job melakukan RETRY
+            // 1. CEK DULU: Jangan tembak API kalau record ini sudah punya ID SatuSehat
+            // Ini kunci untuk menghindari error 20002 saat Job melakukan RETRY
             if ($pres->satusehat_medication_request_id) {
-                continue; 
+                continue;
             }
 
             $result = $service->sendMedicationRequest($pres, $this->visit);
@@ -45,7 +45,7 @@ class SyncMedicationRequestToSatuSehat implements ShouldQueue
                 // 2. LANGSUNG UPDATE: Begitu dapat ID, simpan ke database
                 $pres->update([
                     'satusehat_medication_request_id' => $result['id'],
-                    'status' => 'pending',
+                    'status' => 'sent_to_pharmacy', // Update status agar muncul di antrian farmasi
                 ]);
             }
         }

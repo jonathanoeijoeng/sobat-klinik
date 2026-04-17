@@ -534,7 +534,7 @@ class SatuSehatService
     public function sendMedicationRequest($prescription, $visit)
     {
 
-        $qty = (float) $prescription->quantity;
+        $qty = (float) $prescription->qty_ordered;
         $freq = (int) ($prescription->frequency_per_day ?: 1);
 
         $payload = [
@@ -601,7 +601,7 @@ class SatuSehatService
                                 ]
                             ],
                             "doseQuantity" => [
-                                "value" => $qty, // Pastikan 1.0 atau 1
+                                "value" => (float) $prescription->qty_ordered, // Pastikan 1.0 atau 1
                                 "unit" => "TAB",
                                 "system" => "http://unitsofmeasure.org",
                                 "code" => "{tablet}" // Gunakan standar UCUM '{tablet}' atau 'TAB'
@@ -721,7 +721,7 @@ class SatuSehatService
                 ]
             ],
             "quantity" => [
-                "value" => (float) $prescription->quantity,
+                "value" => (float) $prescription->qty_ordered,
                 "unit" => $prescription->unit,
                 "system" => "http://terminology.hl7.org/CodeSystem/v3-orderableDrugForm", // Sesuaikan dengan contoh
                 "code" => "TAB" // Sesuaikan dengan database kamu, misal TAB/CAPS
