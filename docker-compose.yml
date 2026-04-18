@@ -1,9 +1,9 @@
 services:
-  klinik-sehat-app:
+  sobat-klinik-app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: klinik-sehat-app
+    container_name: sobat-klinik-app
     restart: always
     working_dir: /var/www
     environment:
@@ -20,9 +20,9 @@ services:
     networks:
       - hellojonathan-network
 
-  klinik-sehat-web:
+  sobat-klinik-web:
     image: nginx:alpine
-    container_name: klinik-sehat-nginx
+    container_name: sobat-klinik-nginx
     restart: always
     ports:
       - "8086:80"
@@ -32,16 +32,16 @@ services:
     networks:
       - hellojonathan-network
     depends_on:
-      - klinik-sehat-app
+      - sobat-klinik-app
 
-  klinik-sehat-db:
+  sobat-klinik-db:
     image: postgres:16-alpine
-    container_name: klinik-sehat-db
+    container_name: sobat-klinik-db
     restart: always
     environment:
-      - POSTGRES_DB=klinik-sehat-db
-      - POSTGRES_USER=klinik-sehat
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=${DB_DATABASE}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
       - TZ=Asia/Jakarta
     ports:
       - "5434:5432" # Pakai 0.0.0.0 agar bisa diakses dari IP 192.168.x.x
@@ -51,11 +51,11 @@ services:
     networks:
       - hellojonathan-network
 
-  klinik-sehat-worker:
+  sobat-klinik-worker:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: klinik-sehat-worker
+    container_name: sobat-klinik-worker
     restart: always
     command: php artisan queue:work --tries=3
     volumes:
@@ -63,13 +63,13 @@ services:
     networks:
       - hellojonathan-network
     depends_on:
-      - klinik-sehat-app
+      - sobat-klinik-app
 
-  klinik-sehat-scheduler:
+  sobat-klinik-scheduler:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: klinik-sehat-scheduler
+    container_name: sobat-klinik-scheduler
     restart: always
     command: sh -c "while [ true ]; do php artisan schedule:run --no-interaction & sleep 60; done"
     volumes:
@@ -77,13 +77,13 @@ services:
     networks:
       - hellojonathan-network
     depends_on:
-      - klinik-sehat-app
+      - sobat-klinik-app
 
-  klinik-sehat-reverb:
+  sobat-klinik-reverb:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: klinik-sehat-reverb
+    container_name: sobat-klinik-reverb
     restart: always
     command: php artisan reverb:start --host=0.0.0.0 --port=8080
     ports:
@@ -95,7 +95,7 @@ services:
     networks:
       - hellojonathan-network
     depends_on:
-      - klinik-sehat-app
+      - sobat-klinik-app
 
 networks:
   hellojonathan-network:
