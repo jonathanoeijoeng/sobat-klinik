@@ -18,6 +18,7 @@ class PatientSeeder extends Seeder
             [
                 'satusehat_id' => 'P02280547535',
                 'nik' => '9104025209000006',
+                'medical_record_number' => '2603180101',
                 'name' => 'Salsabilla Anjani Rizki',
                 'gender' => 'female',
                 'birth_date' => '2001-04-16',
@@ -28,6 +29,7 @@ class PatientSeeder extends Seeder
             [
                 'satusehat_id' => 'P02478375538',
                 'nik' => '9271060312000001',
+                'medical_record_number' => '2604150111',
                 'name' => 'Ardianto Putra',
                 'gender' => 'male',
                 'birth_date' => '1992-01-09',
@@ -38,6 +40,7 @@ class PatientSeeder extends Seeder
             [
                 'satusehat_id' => 'P03647103112',
                 'nik' => '9204014804000002',
+                'medical_record_number' => '2605120121',
                 'name' => 'Claudia Sintia',
                 'gender' => 'female',
                 'birth_date' => '1989-11-03',
@@ -48,6 +51,7 @@ class PatientSeeder extends Seeder
             [
                 'satusehat_id' => 'P00805884304',
                 'nik' => '9104224509000003',
+                'medical_record_number' => '2602190131',
                 'name' => 'Elizabeth Dior',
                 'gender' => 'female',
                 'birth_date' => '1976-07-07',
@@ -58,6 +62,7 @@ class PatientSeeder extends Seeder
             [
                 'satusehat_id' => 'P00912894463',
                 'nik' => '9104223107000004',
+                'medical_record_number' => '2602190141',
                 'name' => 'Dr. Alan Bagus Prasetya',
                 'gender' => 'male',
                 'birth_date' => '1977-09-03',
@@ -68,6 +73,7 @@ class PatientSeeder extends Seeder
             [
                 'satusehat_id' => 'P01654557057',
                 'nik' => '9104224606000005',
+                'medical_record_number' => '2601190151',
                 'name' => 'Ghina Assyifa',
                 'gender' => 'female',
                 'birth_date' => '2004-08-21',
@@ -78,6 +84,7 @@ class PatientSeeder extends Seeder
             [
                 'satusehat_id' => 'P01836748436',
                 'nik' => '9201076001000007',
+                'medical_record_number' => '2603190161',
                 'name' => 'Theodore Elisjah',
                 'gender' => 'female',
                 'birth_date' => '1985-09-18',
@@ -88,6 +95,7 @@ class PatientSeeder extends Seeder
             [
                 'satusehat_id' => 'P00883356749',
                 'nik' => '9201394901000008',
+                'medical_record_number' => '2603190171',
                 'name' => 'Sonia Herdianti',
                 'gender' => 'female',
                 'birth_date' => '1996-06-08',
@@ -98,6 +106,7 @@ class PatientSeeder extends Seeder
             [
                 'satusehat_id' => 'P01058967035',
                 'nik' => '9201076407000009',
+                'medical_record_number' => '2601190181',
                 'name' => 'Nancy Wang',
                 'gender' => 'female',
                 'birth_date' => '1955-10-10',
@@ -108,6 +117,7 @@ class PatientSeeder extends Seeder
             [
                 'satusehat_id' => 'P02428473601',
                 'nik' => '9210060207000010',
+                'medical_record_number' => '2601150191',
                 'name' => 'Syarif Muhammad',
                 'gender' => 'male',
                 'birth_date' => '1988-11-02',

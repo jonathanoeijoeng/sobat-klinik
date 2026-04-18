@@ -7,7 +7,7 @@ ACTION=$1   # Contoh: "seed" atau "deploy"
 MODE=$2     # Contoh: "local" atau "docker" (default ke docker jika kosong)
 
 echo "---------------------------------------------------"
-echo "🚀 Klinik Sehat Auto-Deploy: $(date)"
+echo "🚀 Sobat Klinik Auto-Deploy: $(date)"
 echo "Mode: ${MODE:-docker}"
 echo "---------------------------------------------------"
 
@@ -23,7 +23,7 @@ run_cmd() {
         $@
     else
         # Jalankan di dalam container docker
-        docker exec klinik-sehat-app $@
+        docker exec sobat-klinik-app $@
     fi
 }
 
@@ -37,9 +37,9 @@ if [ "$MODE" == "local" ]; then
     npm run build
 else
     echo "Running composer and npm inside Docker container..."
-    docker exec klinik-sehat-app composer install --no-dev --optimize-autoloader
-    docker exec klinik-sehat-app npm install
-    docker exec klinik-sehat-app npm run build
+    docker exec sobat-klinik-app composer install --no-dev --optimize-autoloader
+    docker exec sobat-klinik-app npm install
+    docker exec sobat-klinik-app npm run build
 fi
 
 # 4. Database & Cache
@@ -50,7 +50,7 @@ if [ "$ACTION" == "seed" ]; then
     if [ "$MODE" == "local" ]; then
         php artisan migrate:fresh --seed --force
     else
-        docker exec -e APP_ENV=local klinik-sehat-app php artisan migrate:fresh --seed --force
+        docker exec -e APP_ENV=local sobat-klinik-app php artisan migrate:fresh --seed --force
     fi
 else
     run_cmd php artisan migrate --force
@@ -67,7 +67,7 @@ if [ "$MODE" == "local" ]; then
     # Contoh: pm2 restart reverb-app
     echo "Skipping docker restart in local mode..."
 else
-    docker compose restart klinik-sehat-reverb
+    docker compose restart sobat-klinik-reverb
 fi
 
 echo "---------------------------------------------------"

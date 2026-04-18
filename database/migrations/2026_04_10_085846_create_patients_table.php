@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('satusehat_id')->nullable()->index(); 
             $table->string('nik', 16)->unique()->index();
+            $table->string('medical_record_number', 20)->unique()->index();
             $table->string('name');
             $table->enum('gender', ['male', 'female']);
             $table->date('birth_date');
