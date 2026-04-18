@@ -29,9 +29,18 @@ run_cmd() {
 
 # 3. Update dependencies
 echo "📦 Updating dependencies..."
-run_cmd composer install --no-dev --optimize-autoloader
-run_cmd npm install
-run_cmd npm run build
+
+if [ "$MODE" == "local" ]; then
+    echo "Running composer and npm locally..."
+    composer install
+    npm install
+    npm run build
+else
+    echo "Running composer and npm inside Docker container..."
+    docker exec klinik-sehat-app composer install --no-dev --optimize-autoloader
+    docker exec klinik-sehat-app npm install
+    docker exec klinik-sehat-app npm run build
+fi
 
 # 4. Database & Cache
 echo "🗄️ Running migrations & clearing cache..."
