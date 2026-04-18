@@ -13,7 +13,8 @@ new class extends Component {
 
     public string $search = '';
     public $visit;
-    public $showModal = false;
+    public $showConfirmModal = false;
+    public $message = '';
     public $currentRoute;
     public $patient_name,
         $patient_phone,
@@ -24,6 +25,20 @@ new class extends Component {
     {
         // Simpan nama route saat halaman pertama kali dibuka
         $this->currentRoute = request()->route()->getName();
+    }
+
+    public function confirmDispense($visitId)
+    {
+        $this->visit = OutpatientVisit::with('patient')->findOrFail($visitId);
+        $this->patient_name = $this->visit->patient->name;
+        $this->showConfirmModal = true;
+        $this->message = "Apakah Anda yakin ingin memproses penyerahan obat untuk pasien <b>{$this->patient_name}</b>?";
+    }
+
+    public function processDispense()
+    {
+        $this->showConfirmModal = false;
+        $this->sendMedicationDispense($this->visit->id);
     }
 
     public function sendMedicationDispense($visitId)
@@ -89,7 +104,7 @@ new class extends Component {
                 </div>
                 <div class="flex items-center">
                     @if ($visit->prescriptions->every('paid_at'))
-                        <x-button wire:click="sendMedicationDispense({{ $visit->id }})" class="ml-4 text-sm"
+                        <x-button wire:click="confirmDispense({{ $visit->id }})" class="ml-4 text-sm"
                             variant="green">
                             PROSES PENYERAHAN OBAT
                         </x-button>
@@ -127,5 +142,8 @@ new class extends Component {
     <div class="mt-4">
         {{ $pharmacies->links() }}
     </div>
+
+    <x-confirm wire:model="showConfirmModal" title="Konfirmasi Penyerahan Obat" :message="$message"
+        confirmText="Ya, Sudah diserahkan" cancelText="Batal" action="processDispense" />
 
 </div>

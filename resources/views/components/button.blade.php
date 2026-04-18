@@ -15,6 +15,8 @@
         'red' => 'bg-red-600 hover:bg-red-800 text-white shadow-red-200 dark:shadow-none',
         'zinc' => 'bg-zinc-800 hover:bg-black text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200',
         'brand' => 'bg-brand-500 hover:bg-brand-700 text-white shadow-brand/50 dark:shadow-none',
+        'ghost' =>
+            'bg-gray-200 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200',
     ];
 
     $selectedVariant = $variants[$variant] ?? $variants['blue'];
@@ -24,8 +26,8 @@
     {{ $attributes->merge([
         'class' =>
             "cursor-pointer inline-flex items-center justify-center px-4 py-2 rounded-lg transition-all
-            duration-200 shadow hover:shadow active:scale-95 
-            disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed " . $selectedVariant,
+                        duration-200 shadow hover:shadow active:scale-95 
+                        disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed " . $selectedVariant,
     ]) }}
     @if ($loading) wire:loading.attr="disabled" @endif>
     {{-- Spinner Loading --}}
