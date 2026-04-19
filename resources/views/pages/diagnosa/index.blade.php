@@ -24,6 +24,7 @@ new class extends Component {
     public $search = '';
     public $medicineSearch = '';
     public $selectedMedicineId;
+    public $selectedMedicineData = [];
     public $qty;
     public $instruction = '';
     public $isPrimary = false;
@@ -130,6 +131,11 @@ new class extends Component {
         if ($medicine && $medicine->satusehat_medication_id) {
             $this->selectedMedicineId = $medicine->id;
             $this->medicineSearch = $medicine->display_name;
+            $this->selectedMedicineData = [
+                'kfa_code' => $medicine->kfa_code,
+                'name' => $medicine->name,
+                'manufacturer' => $medicine->manufacturer,
+            ];
             $this->kfaResults = [];
             return;
         }
@@ -181,7 +187,12 @@ new class extends Component {
 
         // Isi state untuk form input
         $this->selectedMedicineId = $medicine->id;
-        $this->medicineSearch = $medicine->display_name; // Nama obat muncul di search field
+        $this->medicineSearch = $medicine->name; // Nama obat muncul di search field
+        $this->selectedMedicineData = [
+            'kfa_code' => $medicine->kfa_code,
+            'name' => $medicine->name,
+            'manufacturer' => $medicine->manufacturer,
+        ];
 
         // Tutup dropdown hasil KFA
         $this->kfaResults = [];
@@ -228,6 +239,7 @@ new class extends Component {
             $medicine = Medicine::find($this->selectedMedicineId);
             if ($medicine && $value !== $medicine->display_name) {
                 $this->selectedMedicineId = null;
+                $this->selectedMedicineData = [];
             } else {
                 // Jika nilai sama dengan yang dipilih (karena programmatically set), jangan cari lagi
                 return;
@@ -236,6 +248,7 @@ new class extends Component {
 
         if (empty($value)) {
             $this->kfaResults = [];
+            $this->selectedMedicineData = [];
             return;
         }
 
@@ -294,7 +307,7 @@ new class extends Component {
         ]);
 
         // Reset form untuk input obat berikutnya
-        $this->reset(['selectedMedicineId', 'medicineSearch', 'qty', 'instruction']);
+        $this->reset(['selectedMedicineId', 'selectedMedicineData', 'medicineSearch', 'qty', 'instruction']);
 
         $this->visit->load('prescriptions'); // Refresh list resep di bawah
     }
@@ -586,6 +599,26 @@ new class extends Component {
                             @focus="open = true" name="medicineSearch"
                             placeholder="Cari obat di KFA (Nama atau Kode)..." :disabled="$visit->status === 'finished'" />
 
+                        @if (!empty($selectedMedicineData))
+                            <div class="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-gray-700">
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                    <div>
+                                        <div class="text-xs uppercase text-slate-500">KFA Code</div>
+                                        <div class="font-semibold">{{ $selectedMedicineData['kfa_code'] }}</div>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <div class="text-xs uppercase text-slate-500">Nama Obat</div>
+                                        <div class="font-semibold">{{ $selectedMedicineData['name'] }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs uppercase text-slate-500">Manufacturer</div>
+                                        <div class="font-semibold">{{ $selectedMedicineData['manufacturer'] ?? '-' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
                         @if (count($kfaResults) > 0)
                             <div x-show="open" @click.away="open = false"
                                 class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl overflow-hidden max-h-80 overflow-y-auto">
@@ -649,7 +682,8 @@ new class extends Component {
                             <div
                                 class="flex justify-between items-center p-3 border-l-8 {{ $statusClasses }} border-y border-r rounded-lg shadow-sm transition-colors">
                                 <div>
-                                    <span class="font-bold text-gray-800">{{ $pres->medicine->display_name }}</span>
+                                    <span class="font-bold text-gray-800">{{ $pres->medicine->kfa_code }} -
+                                        {{ $pres->medicine->name }}</span>
                                     <span class="text-sm text-gray-500 ml-2">({{ $pres->qty_ordered }}
                                         {{ $pres->medicine->unit ?? 'pcs' }} -
                                         {{ $pres->medicine->form_type }})</span>

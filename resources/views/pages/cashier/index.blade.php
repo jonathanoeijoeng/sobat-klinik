@@ -15,6 +15,7 @@ new class extends Component {
     public $selectedMethod = 'Cash'; // Default method
     public $message = '';
     public $amount = 0;
+    public $lastPaymentMethod = '';
 
     public function updatingSearch()
     {
@@ -31,8 +32,15 @@ new class extends Component {
 
         $patientName = $this->selectedInvoice->outpatient_visit->patient->name;
         $total = number_format($this->selectedInvoice->grand_total, 0, ',', ',');
+        $this->lastPaymentMethod = Invoice::whereHas('outpatient_visit', function ($query) {
+            $query->where('patient_id', $this->selectedInvoice->outpatient_visit->patient_id);
+        })
+            ->where('payment_status', 'paid')
+            ->whereNotNull('payment_method')
+            ->latest('paid_at') // Urutkan berdasarkan waktu bayar terbaru
+            ->value('payment_method'); // Ambil hanya nilai kolom payment_method
 
-        $this->message = "Pilih metode pembayaran untuk pasien <b>{$patientName}";
+        $this->message = "Pilih metode pembayaran untuk pasien <b>{$patientName}</b>";
         $this->amount = $total;
 
         $this->showConfirmPayment = true;
@@ -79,11 +87,11 @@ new class extends Component {
                 FinalizeVisitJob::dispatch($invoice->outpatient_visit)->onQueue('high-priority');
             }
 
-            $this->dispatch('toaster', message: "Pembayaran {$method} Berhasil", type: 'success');
+            $this->dispatch('toast', text: "Pembayaran {$method} Berhasil", type: 'success');
             $this->showConfirmPayment = false;
             $this->reset('selectedInvoice');
         } catch (\Exception $e) {
-            $this->dispatch('toaster', message: 'Error: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('toast', text: 'Error: ' . $e->getMessage(), type: 'error');
         }
     }
 
@@ -232,6 +240,11 @@ new class extends Component {
                         </x-button>
                     @endforeach
                 </div>
+                @if ($lastPaymentMethod)
+                    <div class="border-t border-slate-200 mt-4 pt-2 text-xs text-slate-500 italic">
+                        Pembayaran terakhir menggunakan: <span class="font-bold">{{ $lastPaymentMethod }}</span>
+                    </div>
+                @endif
 
                 <button wire:click="$set('showConfirmPayment', false)"
                     class="w-full mt-6 text-xs text-slate-400 hover:text-slate-600 underline">

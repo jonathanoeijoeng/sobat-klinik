@@ -24,6 +24,7 @@ new class extends Component {
     public $temperature = 36.5;
     public $registration_fee = 50000;
     public $age = '';
+    public $visitHistory;
 
     public $showModal = false;
 
@@ -39,6 +40,7 @@ new class extends Component {
             $patient = Patient::find($value);
             // Mengambil umur dari accessor yang kamu buat di model
             $this->age = $patient->age_string;
+            $this->visitHistory = OutpatientVisit::with('patient', 'practitioner', 'invoice')->where('patient_id', $value)->orderBy('created_at', 'desc')->take(5)->get();
         } else {
             $this->currentAge = null;
         }
@@ -224,7 +226,7 @@ new class extends Component {
     <div x-data="{ open: @entangle('showModal') }" x-show="open"
         class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto" x-cloak>
         <div class="fixed inset-0 bg-black opacity-50"></div>
-        <div class="relative bg-white rounded-lg shadow-xl max-w-xl w-full p-6 dark:bg-gray-800">
+        <div class="relative bg-white rounded-lg shadow-xl w-full max-w-4xl p-6 dark:bg-gray-800">
             <div class="mb-5">
                 <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Registrasi Rawat Jalan Baru</h3>
                 <p class="text-sm text-gray-500">Input data kunjungan pasien baru</p>
@@ -281,6 +283,34 @@ new class extends Component {
                         placeholder="Contoh: Pusing sejak 2 hari lalu..." />
                 </div>
             </div>
+
+            @if ($visitHistory)
+                <div class="mt-4 border-t pt-4">
+                    <h4 class="font-semibold text-gray-700">Riwayat Kunjungan</h4>
+                    <div class="border rounded-lg overflow-x-auto shadow-sm -mx-4 px-4 md:mx-0 md:px-0 mt-2">
+                        <table class="w-full text-xs text-left divide-y divide-gray-200">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-gray-600 uppercase">Tanggal</th>
+                                    <th class="px-4 py-2 text-gray-600 uppercase">Dokter</th>
+                                    <th class="px-4 py-2 text-gray-600 uppercase">Keluhan</th>
+                                    <th class="px-4 py-2 text-gray-600 uppercase">Invoice status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @foreach ($visitHistory as $visit)
+                                    <tr>
+                                        <td class="px-4 py-2">{{ $visit->arrived_at->format('d M Y') }}</td>
+                                        <td class="px-4 py-2">{{ $visit->practitioner->name }}</td>
+                                        <td class="px-4 py-2">{{ $visit->complaint }}</td>
+                                        <td class="px-4 py-2 capitalize">{{ $visit->invoice->payment_status }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
 
             <div class="mt-6 flex justify-end space-x-3">
                 <button @click="open = false"
