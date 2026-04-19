@@ -1,0 +1,94 @@
+server {
+    listen 80;
+    server_name sobat-klinik.hellojonathan.my.id;
+    index index.php index.html;
+    
+    root /var/www/public;
+
+    error_log  /var/log/nginx/error.log;
+    access_log /var/log/nginx/access.log;
+
+    client_max_body_size 20M;
+
+    # Handle Livewire requests - POST /livewire-{hash}/update
+    location ~ ^/livewire-[\w]+/update$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass sobat-klinik-app:9000;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root/index.php;
+        fastcgi_param PATH_INFO /index.php;
+        fastcgi_read_timeout 300;
+    }
+
+    # Whitelist Livewire - match static assets (/livewire/*)
+    location ~ ^/livewire/ {
+        try_files $uri =404;
+    }
+
+    # Whitelist Flux - match static assets (/flux/*)
+    location ~ ^/flux/ {
+        try_files $uri =404;
+    }
+
+    location ~* ^(?!/(flux|livewire)/).*\.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
+        expires 30d;
+        access_log off;
+    }
+
+
+    # Gzip Optimasi
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+    # --- KHUSUS LARAVEL REVERB ---
+    # Tambahkan ini agar websocket bisa lewat port 80/443
+    location /app {
+        proxy_http_version 1.1;
+        proxy_set_header Host $http_host;
+        proxy_set_header Scheme $scheme;
+        proxy_set_header SERVER_PORT $server_port;
+        proxy_set_header REMOTE_ADDR $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+
+        proxy_pass http://sobat-klinik-reverb:8080;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # Blokir file sensitif
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+
+    # Optimasi Static Files (CSS/JS Tailwind)
+    location ~* \.(?:ico|css|js|gif|jpe?g|png|woff2?|eot|otf|ttf|svg)$ {
+        # Gunakan =404 untuk static files agar tidak membebani PHP-FPM
+        try_files $uri =404;
+        expires 6M;
+        access_log off;
+        add_header Cache-Control "public";
+    }
+
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        
+        # Sesuai dengan service docker-compose
+        fastcgi_pass sobat-klinik-app:9000; 
+        
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+        
+        fastcgi_read_timeout 300;
+    }
+}
