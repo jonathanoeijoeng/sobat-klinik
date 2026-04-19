@@ -425,7 +425,7 @@ new class extends Component {
                 </div>
                 <div>
                     <p class="text-xs text-gray-500 uppercase">No. Rekam Medis</p>
-                    <p class="font-semibold">{{ $visit->patient->no_rm }}</p>
+                    <p class="font-semibold">{{ $visit->patient->medical_record_number }}</p>
                 </div>
                 <div>
                     <p class="text-xs text-gray-500 uppercase">Tanggal Kunjungan</p>
