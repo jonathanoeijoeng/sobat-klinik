@@ -80,9 +80,6 @@ new class extends Component {
 <div>
     @include('pages.pharmacy.route')
 
-    <x-input wire:model.live.debounce.100ms="search" name="search" placeholder="Cari pasien..." type="search"
-        class="mb-4 md:max-w-lg w-full" />
-
     @foreach ($pharmacies as $visit)
         @php
             $statuses = $visit->prescriptions->pluck('status');
@@ -104,8 +101,7 @@ new class extends Component {
                 </div>
                 <div class="flex items-center">
                     @if ($visit->prescriptions->every('paid_at'))
-                        <x-button wire:click="confirmDispense({{ $visit->id }})" class="ml-4 text-sm"
-                            variant="green">
+                        <x-button wire:click="confirmDispense({{ $visit->id }})" class="ml-4 text-sm" variant="green">
                             PROSES PENYERAHAN OBAT
                         </x-button>
                     @endif

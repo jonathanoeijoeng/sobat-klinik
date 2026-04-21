@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('display_name');
             $table->string('form_type')->nullable(); // Tablet, Sirup, dll
+            $table->string('uom'); // Satuan: Tablet, Botol, dll
             $table->string('manufacturer')->nullable();
             $table->decimal('fix_price', 15, 2)->default(0);
             $table->decimal('het_price', 15, 2)->default(5000);

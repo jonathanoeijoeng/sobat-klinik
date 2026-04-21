@@ -1,0 +1,135 @@
+<?php
+
+use Livewire\Component;
+use App\Models\Invoice;
+use Livewire\WithPagination;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+
+new class extends Component {
+    use WithPagination;
+    public $currentRoute;
+    public string $search = '';
+
+    public function mount()
+    {
+        // Simpan nama route saat halaman pertama kali dibuka
+        $this->currentRoute = request()->route()->getName();
+    }
+
+    public function render()
+    {
+        $invoices = Invoice::with(['outpatient_visit.patient']) // Eager loading dalam array lebih rapi
+            ->whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()])
+            ->when($this->search, function ($query) {
+                $query->where(function ($sub) {
+                    // Pencarian di level Invoice
+                    $sub->where('invoice_number', 'ilike', '%' . $this->search . '%')
+                        // Pencarian di level Patient (Relasi)
+                        ->orWhereHas('outpatient_visit.patient', function ($q) {
+                            $q->where('name', 'ilike', '%' . $this->search . '%');
+                        });
+                });
+            })
+            ->orderBy('paid_at', 'desc') // Lebih eksplisit dibanding latest()
+            ->paginate(25);
+        $totals = Invoice::query()
+            ->selectRaw('SUM(registration_fee) as total_reg')
+            ->selectRaw('SUM(practitioner_fee) as total_practitioner')
+            ->selectRaw('SUM(medicine_total) as total_medicine')
+            ->selectRaw('SUM(grand_total) as total_grand')
+            ->where('payment_status', 'paid') // Hanya yang sudah lunas
+            ->when($this->search, function ($query) {
+                $query->whereHas('outpatient_visit.patient', function ($q) {
+                    $q->where('name', 'ilike', '%' . $this->search . '%');
+                });
+            })
+            ->first();
+
+        return $this->view([
+            'invoices' => $invoices,
+            'totals' => $totals,
+        ]);
+    }
+};
+?>
+
+<div>
+    @include('pages.cashier.route')
+
+    <div class="border rounded-lg overflow-x-auto shadow-sm -mx-4 px-4 md:mx-0 md:px-0">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-brand-500">
+                <tr>
+                    <th class="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-widest">
+                        Tanggal
+                    </th>
+                    <th class="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-widest">
+                        Nama</th>
+                    <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
+                        Status</th>
+                    <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
+                        Method</th>
+                    <th class="px-6 py-4 text-right text-sm font-bold text-white uppercase tracking-widest">
+                        Registration</th>
+                    <th class="px-6 py-4 text-right text-sm font-bold text-white uppercase tracking-widest">
+                        Dokter</th>
+                    <th class="px-6 py-4 text-right text-sm font-bold text-white uppercase tracking-widest">
+                        Obat</th>
+                    <th class="px-6 py-4 text-right text-sm font-bold text-white uppercase tracking-widest">Total</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                <tr class="bg-slate-200">
+                    <td colspan="4"
+                        class="px-6 py-4 text-center text-sm font-bold text-gray-900 uppercase tracking-widest">
+                        Total Bulan Ini
+                    </td>
+                    <td class="px-6 py-4 text-right font-mono text-sm font-bold">
+                        IDR {{ number_format($totals->total_reg, 0, ',', ',') }}
+                    </td>
+                    <td class="px-6 py-4 text-right font-mono text-sm font-bold">
+                        IDR {{ number_format($totals->total_practitioner, 0, ',', ',') }}
+                    </td>
+                    <td class="px-6 py-4 text-right font-mono text-sm font-bold">
+                        IDR {{ number_format($totals->total_medicine, 0, ',', ',') }}
+                    </td>
+                    <td class="px-6 py-4 text-right font-mono text-sm font-bold">
+                        IDR {{ number_format($totals->total_grand, 0, ',', ',') }}
+                    </td>
+                </tr>
+                @foreach ($invoices as $invoice)
+                    <tr>
+                        <td class=" px-6 py-4 text-center text-sm font-medium capitalize">
+                            {{ Carbon::parse($invoice->created_at)->format('d M Y') }}
+                        </td>
+                        <td class=" px-6 py-4">
+                            <div class="font-medium text-gray-900">{{ $invoice->outpatient_visit->patient->name }}</div>
+                        </td>
+                        <td class=" px-6 py-4 text-center text-sm font-medium uppercase">
+                            {{ $invoice->payment_status }}
+                        </td>
+                        <td class=" px-6 py-4 text-center text-sm font-medium uppercase">
+                            {{ $invoice->payment_method }}
+                        </td>
+                        <td class=" px-6 py-4 text-right font-mono text-sm font-medium">
+                            IDR {{ number_format($invoice->registration_fee, 0, ',', ',') }}
+                        </td>
+                        <td class="px-6 py-4 text-right font-mono text-sm font-medium">
+                            IDR {{ number_format($invoice->practitioner_fee, 0, ',', ',') }}
+                        </td>
+                        <td class="px-6 py-4 text-right font-mono text-sm font-medium">
+                            IDR {{ number_format($invoice->medicine_total, 0, ',', ',') }}
+                        </td>
+                        <td class="px-6 py-4 text-right font-mono text-sm font-medium">
+                            IDR {{ number_format($invoice->grand_total, 0, ',', ',') }}
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    <div class="md:block hidden mt-4">
+        {{ $invoices->links() }}
+    </div>
+</div>

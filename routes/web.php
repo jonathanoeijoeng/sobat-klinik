@@ -28,6 +28,7 @@ Route::middleware(['auth', 'verified', 'clinic_active'])->group(function () {
 
     // Kasir
     Route::livewire('/cashier', 'pages::cashier.index')->name('cashier.index');
+    Route::livewire('/cashier/rekap', 'pages::cashier.rekap')->name('cashier.rekap');
 
     // Settings
     Route::livewire('/settings/master-obat', 'pages::settings.master-obat')->name('settings.master-obat');

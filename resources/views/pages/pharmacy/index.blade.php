@@ -128,9 +128,6 @@ new class extends Component {
 <div>
     @include('pages.pharmacy.route')
 
-    <x-input wire:model.live.debounce.100ms="search" name="search" placeholder="Cari pasien..." type="search"
-        class="mb-4 md:max-w-lg w-full" />
-
     @foreach ($pharmacies as $visit)
         @php
             $statuses = $visit->prescriptions->pluck('status');

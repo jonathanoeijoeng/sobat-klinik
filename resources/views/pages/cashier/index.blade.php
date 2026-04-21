@@ -16,6 +16,13 @@ new class extends Component {
     public $message = '';
     public $amount = 0;
     public $lastPaymentMethod = '';
+    public $currentRoute;
+
+    public function mount()
+    {
+        // Simpan nama route saat halaman pertama kali dibuka
+        $this->currentRoute = request()->route()->getName();
+    }
 
     public function updatingSearch()
     {
@@ -123,11 +130,7 @@ new class extends Component {
 ?>
 
 <div>
-    <x-header header="Kasir" description="Kelola pembayaran pasien secara akurat untuk menyelesaikan kunjungan" />
-
-    <div class="mb-6 max-w-md">
-        <x-input wire:model.live.debounce.300ms="search" icon="search" placeholder="Cari nama pasien..." name="search" />
-    </div>
+    @include('pages.cashier.route')
 
     @foreach ($lists as $invoice)
         <div wire:key="inv-{{ $invoice->id }}"

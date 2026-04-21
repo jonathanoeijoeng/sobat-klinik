@@ -125,7 +125,7 @@ class PatientSeeder extends Seeder
             ],
             [
                 'satusehat_patient_id' => 'P02428473601',
-                'clinic_id' => 2,
+                'clinic_id' => 1,
                 'nik' => '9210060207000010',
                 'medical_record_number' => '2601150191',
                 'name' => 'Syarif Muhammad',

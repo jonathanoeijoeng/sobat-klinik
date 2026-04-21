@@ -197,6 +197,7 @@ new class extends Component {
                 'form_type' => $kfaData['form'] ?? 'Obat',
                 'manufacturer' => $kfaData['manufacturer'] ?? null,
                 'fix_price' => $kfaData['fix_price'] ?? null,
+                'uom' => $kfaData['uom'],
             ],
         );
 
@@ -266,6 +267,7 @@ new class extends Component {
                     'form' => $item['dosage_form']['name'] ?? 'Obat',
                     'manufacturer' => $item['manufacturer'] ?? null,
                     'fix_price' => $item['fix_price'] ?? 0,
+                    'uom' => $item['uom']['name'],
                 ];
             })
             ->sortBy('score') // Semakin kecil posisi (0 = di depan), semakin atas
