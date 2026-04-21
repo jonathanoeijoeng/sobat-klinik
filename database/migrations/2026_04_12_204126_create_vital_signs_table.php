@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('vital_signs', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('clinic_id')->index()->constrained('clinics');
             // Foreign key ke tabel outpatient_visits
-            $table->foreignId('outpatient_visit_id')->constrained('outpatient_visits')->onDelete('cascade')->index();
-            
+            $table->foreignId('outpatient_visit_id')->index()->constrained('outpatient_visits')->onDelete('cascade');
+
             $table->integer('systole')->nullable();
             $table->integer('diastole')->nullable();
             $table->string('satusehat_observation_blood_pressure_id')->nullable()->index();

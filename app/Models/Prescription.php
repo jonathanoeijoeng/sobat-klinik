@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Concerns\BelongsToClinic;
 
 class Prescription extends Model
 {
+    use BelongsToClinic;
+
     protected $table = 'prescriptions';
     protected $guarded = [];
 

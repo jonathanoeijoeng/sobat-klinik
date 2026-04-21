@@ -13,21 +13,27 @@ return new class extends Migration
     {
         Schema::create('patients', function (Blueprint $table) {
             $table->id();
-            $table->string('satusehat_id')->nullable()->index(); 
-            $table->string('nik', 16)->unique()->index();
+            $table->foreignId('clinic_id')->index()->constrained('clinics');
+            // ID SATUSEHAT tetap bisa null jika belum sinkron
+            $table->string('satusehat_patient_id')->nullable();
+
+            // Buat kombinasi unique: satu klinik tidak boleh punya ID SATUSEHAT yang sama dua kali
+            $table->unique(['clinic_id', 'satusehat_patient_id'], 'clinic_patient_satusehat_unique');
+            $table->string('nik', 16)->index();
+            $table->unique(['clinic_id', 'nik'], 'clinic_patient_nik_unique');
             $table->string('medical_record_number', 20)->unique()->index();
             $table->string('name');
             $table->enum('gender', ['male', 'female']);
             $table->date('birth_date');
             $table->string('phone_number')->nullable();
             $table->text('address')->nullable();
-            
+
             // Alamat Detail (Kode Wilayah BPS)
             $table->char('province_code', 2)->nullable();
             $table->char('city_code', 4)->nullable();
             $table->char('district_code', 7)->nullable();
             $table->char('village_code', 10)->nullable();
-            
+
             $table->timestamp('last_sync_at')->nullable();
             $table->timestamps();
         });

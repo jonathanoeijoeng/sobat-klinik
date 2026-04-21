@@ -3,9 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Concerns\BelongsToClinic;
+use App\Models\OutPatientVisit;
+use App\Models\Icd10;
 
 class OutPatientDiagnosis extends Model
 {
+    use BelongsToClinic;
+
+
     protected $table = 'out_patient_diagnoses';
     protected $guarded = [];
 

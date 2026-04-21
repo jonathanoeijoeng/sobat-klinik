@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('out_patient_diagnoses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('outpatient_visit_id')->constrained()->onDelete('cascade')->index();
+            $table->foreignId('clinic_id')->index()->constrained('clinics');
+            $table->foreignId('outpatient_visit_id')->index()->constrained('outpatient_visits')->onDelete('cascade');
             $table->string('icd10_code')->index();     // Kode dari tabel ICD-10 lokal Anda
             $table->string('icd10_display');  // Teks deskripsi diagnosis
-            $table->boolean('is_primary')->default(false); 
+            $table->boolean('is_primary')->default(false);
             $table->string('satusehat_condition_id')->nullable()->index(); // ID dari SatuSehat
             $table->timestamps();
         });

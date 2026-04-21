@@ -104,6 +104,7 @@ new class extends Component {
                     tersinkron
                 </p>
             </div>
+
             <div
                 class="p-5 {{ $stats['condition_total'] - $stats['condition_success'] === 0 ? 'bg-pink-100' : 'bg-red-200' }} shadow rounded-xl border border-gray-100">
                 <div class="flex justify-between items-center mb-3">
@@ -132,7 +133,8 @@ new class extends Component {
             <div
                 class="p-5 {{ $stats['prescription_total'] - $stats['prescription_success'] === 0 ? 'bg-green-100' : 'bg-red-200' }} shadow rounded-xl border border-gray-100">
                 <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-gray-500 text-xs font-bold uppercase tracking-wider">Status Medication Request</h3>
+                    <h3 class="text-gray-500 text-xs font-bold uppercase tracking-wider">Status Medication Request
+                    </h3>
                     <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-bold">
                         {{ number_format($stats['prescription_success']) }}/{{ number_format($stats['prescription_total']) }}
                     </span>
@@ -158,7 +160,8 @@ new class extends Component {
             <div
                 class="p-5 {{ $stats['dispense_total'] - $stats['dispense_success'] === 0 ? 'bg-sky-100' : 'bg-red-200' }} shadow rounded-xl border border-gray-100">
                 <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-gray-500 text-xs font-bold uppercase tracking-wider">Status Medication Dispense</h3>
+                    <h3 class="text-gray-500 text-xs font-bold uppercase tracking-wider">Status Medication Dispense
+                    </h3>
                     <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-bold">
                         {{ number_format($stats['dispense_success']) }}/{{ number_format($stats['dispense_total']) }}
                     </span>
@@ -199,10 +202,11 @@ new class extends Component {
                             <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">No. Kunjungan
                             </th>
                             <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Pasien</th>
-                            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">SATUSEHAT ID
+                            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Dokter
                             </th>
                             <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
-                            <th class="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Invoice
+                            <th class="px-5 py-3 text-center text-xs font-semibold text-gray-600 uppercase">SatuSehat
+                                Status
                             </th>
                         </tr>
                     </thead>
@@ -213,23 +217,94 @@ new class extends Component {
                                 <td class="px-5 py-4 text-sm font-medium">{{ $visit->visit_number }}</td>
                                 <td class="px-5 py-4 text-sm">{{ $visit->patient->name }}</td>
                                 <td class="px-5 py-4 text-sm">
-                                    @if ($visit->satusehat_encounter_id)
-                                        <span
-                                            class="text-green-600 font-mono text-xs">{{ $visit->satusehat_encounter_id }}</span>
-                                    @else
-                                        <span class="flex items-center text-yellow-600 text-xs">
-                                            <svg class="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">...</svg>
-                                            Memproses...
-                                        </span>
-                                    @endif
+                                    {{ $visit->practitioner->name ?? '-' }}
                                 </td>
                                 <td class="px-5 py-4 text-sm capitalize">{{ str($visit->internal_status)->headline() }}
                                 </td>
-                                <td class="px-5 py-4 text-sm text-right">
-                                    <span
-                                        class="px-2 py-1 rounded text-xs font-mono text-right {{ $visit->invoice->payment_status === 'paid' ? 'bg-green-200' : 'bg-red-200' }}">
-                                        IDR {{ number_format($visit->invoice->grand_total, 0, '.', ',') }}
-                                    </span>
+                                <td class="px-4 py-3 w-75">
+                                    @php
+                                        $sync = $visit->getSatuSehatSyncStatus();
+                                        $internalStatus = strtolower($visit->internal_status);
+
+                                    @endphp
+
+                                    <div class="flex flex-wrap gap-2 justify-left">
+                                        <span @class([
+                                            'px-3 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
+                                            'bg-green-100 text-green-700 border-green-200' =>
+                                                $visit->satusehat_encounter_id,
+                                            'bg-gray-100 text-gray-400 border-gray-200 opacity-50' => !$visit->satusehat_encounter_id,
+                                        ]) title="Encounter">
+                                            ENC
+                                        </span>
+
+                                        @php
+                                            $obsSynced =
+                                                $visit->vitalsign &&
+                                                $visit->vitalsign->satusehat_observation_blood_pressure_id &&
+                                                $visit->vitalsign->satusehat_observation_weight_id &&
+                                                $visit->vitalsign->satusehat_observation_height_id &&
+                                                $visit->vitalsign->satusehat_observation_temperature_id;
+                                        @endphp
+                                        <span @class([
+                                            'px-3 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
+                                            'bg-orange-100 text-orange-700 border-orange-200' => $obsSynced,
+                                            'bg-gray-100 text-gray-400 border-gray-200 opacity-50' => !$obsSynced,
+                                        ]) title="Observation (Vital Sign)">
+                                            OBS
+                                        </span>
+
+                                        @if (in_array($internalStatus, ['sent_to_pharmacy', 'finished', 'dispensed']))
+                                            @php
+                                                $diagSynced = $visit
+                                                    ->diagnoses()
+                                                    ->whereNotNull('satusehat_condition_id')
+                                                    ->exists();
+                                            @endphp
+                                            <span @class([
+                                                'px-3 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
+                                                'bg-blue-100 text-blue-700 border-blue-200' => $diagSynced,
+                                                'bg-gray-100 text-gray-400 border-gray-200 opacity-50' => !$diagSynced,
+                                            ]) title="Condition (Diagnosis)">
+                                                DIAG
+                                            </span>
+                                        @endif
+
+                                        @php
+                                            // Ambil data pertama dari relasi hasMany
+                                            $prescription = $visit->prescriptions->first();
+                                        @endphp
+
+                                        @if ($prescription)
+                                            @php
+                                                $reqSynced = $prescription->satusehat_medication_request_id;
+                                                // Cek apakah statusnya 'external'
+                                                $isExternal = strtolower($prescription->status) === 'external';
+                                            @endphp
+
+                                            <span @class([
+                                                'px-3 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
+                                                'bg-purple-100 text-purple-700 border-purple-200' => $reqSynced,
+                                                'bg-gray-100 text-gray-400 border-gray-200 opacity-50' => !$reqSynced,
+                                            ]) title="Medication Request">
+                                                RX
+                                            </span>
+
+                                            {{-- Tampilkan DISP hanya jika statusnya BUKAN external dan sudah dispensed --}}
+                                            @if (!$isExternal && $internalStatus === 'finished')
+                                                @php
+                                                    $dispSynced = $prescription->satusehat_medication_dispense_id;
+                                                @endphp
+                                                <span @class([
+                                                    'px-3 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
+                                                    'bg-pink-100 text-pink-700 border-pink-200' => $dispSynced,
+                                                    'bg-gray-100 text-gray-400 border-gray-200 opacity-50' => !$dispSynced,
+                                                ]) title="Medication Dispense">
+                                                    DISP
+                                                </span>
+                                            @endif
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach

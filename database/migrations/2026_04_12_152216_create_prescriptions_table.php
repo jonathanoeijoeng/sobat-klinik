@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('prescriptions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('outpatient_visit_id')->constrained()->cascadeOnDelete()->index();
+            $table->foreignId('clinic_id')->index()->constrained('clinics');
+            $table->foreignId('outpatient_visit_id')->index()->constrained('outpatient_visits')->cascadeOnDelete();
 
             // --- TAMBAHKAN INI ---
-            $table->foreignId('medicine_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('medicine_id')->constrained('medicines')->cascadeOnDelete();
             $table->string('medicine_name'); // Denormalisasi: simpan nama obat saat resep dibuat
             $table->string('instruction')->nullable(); // Contoh: "3 x 1 sesudah makan"
             $table->integer('qty_ordered')->default(0);

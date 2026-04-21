@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('locations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('organization_id')->constrained()->index();
+            $table->foreignId('clinic_id')->index()->constrained('clinics');
             $table->string('name');
             $table->string('satusehat_id')->nullable()->index(); // ID dari hasil POST Location
             $table->timestamps();

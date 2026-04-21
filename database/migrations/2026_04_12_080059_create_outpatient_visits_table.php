@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('outpatient_visits', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('clinic_id')->index()->constrained('clinics');
             $table->string('visit_number')->unique();
             // Relasi Dasar
             $table->foreignId('patient_id')->index();

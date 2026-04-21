@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Casts\Attribute; 
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use App\Concerns\BelongsToClinic;
+
 class Patient extends Model
 {
     /** @use HasFactory<\Database\Factories\PatientFactory> */
-    use HasFactory;
+    use HasFactory, BelongsToClinic;
 
     protected $fillable = [
         'satusehat_id',
@@ -50,7 +52,7 @@ class Patient extends Model
                 return "RM-{$datePart}-{$seqPart}";
             },
             // Saat disimpan ke DB: RM-260418-0001 -> 2604180001
-            set: fn ($value) => preg_replace('/[^0-9]/', '', $value)
+            set: fn($value) => preg_replace('/[^0-9]/', '', $value)
         );
     }
 }

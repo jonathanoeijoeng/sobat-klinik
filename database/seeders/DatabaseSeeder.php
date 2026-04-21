@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Clinic;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -13,18 +14,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::create([
-            'name' => 'Jonathan',
-            'email' => 'jonathan.oeijoeng@gmail.com',
-            'password' => bcrypt('password'),
-        ]);
 
         $this->call([
+            ClinicSeeder::class,
             OrganizationSeeder::class,
             PatientSeeder::class,
             PractitionerSeeder::class,
             LocationSeeder::class,
             Icd10sSeeder::class,
+        ]);
+
+        User::create([
+            'name' => 'Jonathan',
+            'email' => 'jonathan.oeijoeng@gmail.com',
+            'password' => bcrypt('password'),
+            'clinic_id' => 1
         ]);
     }
 }

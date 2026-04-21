@@ -76,7 +76,6 @@ new class extends Component {
 
         // Baru kemudian insert data yang baru
         OutpatientDiagnosis::create([
-            'clinic_id' => Auth::user()->clinic_id,
             'outpatient_visit_id' => $this->visit->id,
             'icd10_code' => $this->selectedIcd10->code,
             'icd10_display' => $this->selectedIcd10->name_en,
@@ -157,7 +156,6 @@ new class extends Component {
                 'form_type' => $kfaData['form'] ?? 'Obat',
                 'manufacturer' => $kfaData['manufacturer'] ?? null,
                 'fix_price' => $kfaData['fix_price'] ?? null,
-                'clinic_id' => Auth::user()->clinic_id,
             ],
         );
 
@@ -299,7 +297,6 @@ new class extends Component {
         $medicine = Medicine::find($this->selectedMedicineId);
 
         $this->visit->prescriptions()->create([
-            'clinic_id' => Auth::user()->clinic_id,
             'medicine_id' => $medicine->id,
             'medicine_name' => $medicine->display_name,
             'qty_ordered' => $this->qty,
@@ -335,6 +332,12 @@ new class extends Component {
             return;
         }
 
+        // Validasi: Pastikan ada minimal satu diagnosa yang di-set sebagai Primary
+        if (!$this->visit->diagnoses()->where('is_primary', true)->exists()) {
+            $this->dispatch('toast', text: 'Gagal: Anda harus menetapkan minimal satu Diagnosa Utama (Primary).', type: 'error');
+            return;
+        }
+
         // Pastikan Encounter ID sudah ada sebelum lanjut
         if (!$this->visit->satusehat_encounter_id) {
             // Jika belum ada, paksa kirim Encounter dulu
@@ -366,7 +369,7 @@ new class extends Component {
         ]);
 
         $this->dispatch('toaster', message: 'Proses sinkronisasi sedang berjalan di background.', type: 'success');
-        return redirect()->route('practitioner.index');
+        return redirect()->route('out-patients.index');
     }
 
     public function sendPrescriptions()
@@ -429,6 +432,9 @@ new class extends Component {
 ?>
 
 <div>
+    <x-header header="Diagnosa Pasien"
+        description="Kelola proses pemeriksaan medis secara komprehensif, mulai dari pencatatan anamnesa, tanda-tanda vital (TTV), hingga penetapan diagnosa ICD-10. Terintegrasi langsung dengan modul resep obat dan sistem SATUSEHAT untuk memastikan setiap keputusan klinis tercatat dalam rekam medis elektronik yang akurat dan legal." />
+
     <div class="max-w-7xl mx-auto py-2 px-4 sm:px-6 lg:px-6">
         <div class="bg-white border border-brand-200 shadow rounded-lg mb-4 overflow-hidden">
             <div class="bg-brand-600 px-4 py-3">
