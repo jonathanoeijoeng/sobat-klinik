@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('practitioners', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('clinic_id')->index()->constrained('clinics');
             $table->string('nik', 16)->unique()->index();
             $table->string('name');
             $table->string('satusehat_id')->nullable()->index(); // ID dari SATUSEHAT (contoh: P000123)

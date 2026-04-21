@@ -40,6 +40,7 @@ new class extends Component {
 
         Patient::create([
             'nik' => $this->nik,
+            'clinic_id' => Auth::user()->clinic_id,
             'name' => $this->name,
             'birth_date' => $this->birth_date,
             'gender' => $this->gender,
@@ -128,10 +129,10 @@ new class extends Component {
                             <div class="text-xs text-gray-500">{{ $patient->nik }}</div>
                         </td>
                         <td class="w-px whitespace-nowrap px-6 py-4">
-                            @if ($patient->satusehat_id)
+                            @if ($patient->satusehat_patient_id)
                                 <span
                                     class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    Terintegrasi ({{ $patient->satusehat_id }})
+                                    Terintegrasi ({{ $patient->satusehat_patient_id }})
                                 </span>
                             @else
                                 <span

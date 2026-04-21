@@ -16,6 +16,7 @@ class PractitionerSeeder extends Seeder
         //
         Practitioner::create([
             'nik' => '3322071302900002',
+            'clinic_id' => 1,
             'name' => 'dr. Yoga Yandika, Sp.A',
             'satusehat_id' => '10006926841',
             'ihs_number' => '1234567890',

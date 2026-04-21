@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('medicines', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('clinic_id')->index()->constrained('clinics');
             $table->string('kfa_code')->unique()->index(); // Kode dari KFA
             $table->string('name');
             $table->string('display_name');

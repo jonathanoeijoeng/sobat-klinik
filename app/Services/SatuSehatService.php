@@ -133,7 +133,7 @@ class SatuSehatService
                 'display' => 'ambulatory'
             ],
             'subject' => [
-                'reference' => 'Patient/' . $visit->patient->satusehat_id,
+                'reference' => 'Patient/' . $visit->patient->satusehat_patient_id,
                 'display' => $visit->patient->name
             ],
             'participant' => [
@@ -218,7 +218,7 @@ class SatuSehatService
                 ]
             ],
             "subject" => [
-                "reference" => "Patient/" . $visit->patient->satusehat_id,
+                "reference" => "Patient/" . $visit->patient->satusehat_patient_id,
                 "display" => $visit->patient->name
             ],
             "encounter" => [
@@ -303,7 +303,7 @@ class SatuSehatService
                 ]
             ],
             "subject" => [
-                "reference" => "Patient/" . $visit->patient->satusehat_id,
+                "reference" => "Patient/" . $visit->patient->satusehat_patient_id,
                 "display" => $visit->patient->name
             ],
             "encounter" => [
@@ -457,7 +457,7 @@ class SatuSehatService
                 ]
             ],
             "subject" => [
-                "reference" => "Patient/" . $visit->patient->satusehat_id,
+                "reference" => "Patient/" . $visit->patient->satusehat_patient_id,
                 "display" => $visit->patient->name
             ],
             // TIPS: Beberapa dev SatuSehat menyarankan hapus blok encounter di sini 
@@ -564,7 +564,7 @@ class SatuSehatService
                 "display" => $prescription->medicine->name
             ],
             "subject" => [
-                "reference" => "Patient/" . $visit->patient->satusehat_id
+                "reference" => "Patient/" . $visit->patient->satusehat_patient_id
             ],
             "encounter" => [
                 "reference" => "Encounter/" . $visit->satusehat_encounter_id
@@ -710,7 +710,7 @@ class SatuSehatService
                 "reference" => "Medication/" . $prescription->medicine->satusehat_medication_id
             ],
             "subject" => [
-                "reference" => "Patient/" . $visit->patient->satusehat_id
+                "reference" => "Patient/" . $visit->patient->satusehat_patient_id
             ],
             "context" => [
                 "reference" => "Encounter/" . $visit->satusehat_encounter_id

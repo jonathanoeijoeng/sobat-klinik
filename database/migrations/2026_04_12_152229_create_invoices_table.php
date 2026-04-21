@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('outpatient_visit_id')->constrained('outpatient_visits')->cascadeOnDelete()->index();
+            $table->foreignId('clinic_id')->index()->constrained('clinics');
+            $table->foreignId('outpatient_visit_id')->index()->constrained('outpatient_visits')->cascadeOnDelete();
             $table->string('invoice_number')->unique()->index(); // INV-YYYYMMDD-XXXX
 
             // Komponen Biaya (IDR)

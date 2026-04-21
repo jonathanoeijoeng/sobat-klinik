@@ -11,10 +11,13 @@ use App\Models\VitalSign;
 use App\Models\OutPatientDiagnosis;
 use App\Models\Invoice;
 use App\Models\Prescription;
+use App\Concerns\BelongsToClinic;
 
 
 class OutpatientVisit extends Model
 {
+    use BelongsToClinic;
+
     protected $table = 'outpatient_visits';
     // protected $fillable = [
     //     'patient_id',
@@ -105,37 +108,64 @@ class OutpatientVisit extends Model
 
     // app/Models/OutpatientVisit.php
 
-    public function scopeWherePendingSync($query)
+    // app/Models/Visit.php
+
+    public function getSatuSehatSyncStatus()
     {
-        return $query->where(function ($q) {
-            $q->where(function ($sub) {
-                $sub->where('status', 'arrived')->whereNull('satusehat_encounter_id');
-            })
-                ->orWhere(function ($sub) {
-                    $sub->where('status', 'at_practitioner')
-                        ->whereHas('diagnoses', function ($d) {
-                            $d->whereNull('satusehat_condition_id');
-                        });
-                })
-                ->orWhere(function ($sub) {
-                    $sub->where('status', 'sent_to_pharmacy')
-                        ->whereHas('diagnoses', function ($d) {
-                            $d->whereNull('satusehat_medication_request_id');
-                        });
-                })
-                ->orWhere(function ($sub) {
-                    $sub->where('status', 'dispensed')
-                        ->whereHas('diagnoses', function ($d) {
-                            $d->whereNull('satusehat_medication_dispense_id');
-                        });
-                })
-                ->orWhere(function ($sub) {
-                    $sub->where('status', 'finished')
-                        ->whereHas('diagnoses', function ($d) {
-                            $d->whereNull('satusehat_encounter_id');
-                        });
-                });
-            // Tambahkan kondisi status lain sesuai matriks kita tadi
-        });
+        $status = [
+            'is_synced' => false,
+            'missing_resources' => [],
+        ];
+
+        $internalStatus = strtolower($this->internal_status);
+
+        // 1. TAHAP ENCOUNTER (Data ada di tabel visit itu sendiri)
+        if (!$this->satusehat_encounter_id) {
+            $status['missing_resources'][] = 'Encounter';
+        }
+
+        // 2. TAHAP OBSERVATION (Data ada di tabel vitalsign)
+        // Asumsi relasi: $this->vitalsign
+        $vitals = $this->vitalSign;
+        if (!$vitals) {
+            $status['missing_resources'][] = 'Semua Vital Sign';
+        } else {
+            // Cek satu per satu ID SatuSehat-nya
+            if (!$vitals->satusehat_observation_blood_pressure_id) $status['missing_resources'][] = 'Obs: Blood Pressure';
+            if (!$vitals->satusehat_observation_weight_id) $status['missing_resources'][] = 'Obs: Weight';
+            if (!$vitals->satusehat_observation_height_id) $status['missing_resources'][] = 'Obs: Height';
+            if (!$vitals->satusehat_observation_temperature_id) $status['missing_resources'][] = 'Obs: Temperature';
+        }
+
+        // 3. TAHAP CONDITION (Data ada di tabel outpatient_diagnose)
+        // Asumsi relasi: $this->diagnoses
+        if (in_array($internalStatus, ['sent_to_pharmacy', 'finished', 'dispensed'])) {
+            $hasSyncedDiagnosis = $this->diagnoses()->whereNotNull('satusehat_condition_id')->exists();
+            if (!$hasSyncedDiagnosis) {
+                $status['missing_resources'][] = 'Condition (Diagnosis)';
+            }
+        }
+
+        // 4. TAHAP RESEP & DISPENSE (Data ada di tabel prescription)
+        // Asumsi relasi: $this->prescription
+        $prescription = $this->prescription;
+        if ($prescription) {
+            // Cek Medication Request
+            if (!$prescription->satusehat_medication_request_id) {
+                $status['missing_resources'][] = 'Medication Request';
+            }
+
+            // Cek Medication Dispense (Jika tebus internal & status sudah dispensed)
+            if (!$this->external && $internalStatus === 'dispensed') {
+                if (!$prescription->satusehat_medication_dispense_id) {
+                    $status['missing_resources'][] = 'Medication Dispense';
+                }
+            }
+        } elseif ($this->has_prescription) {
+            $status['missing_resources'][] = 'Prescription Data';
+        }
+
+        $status['is_synced'] = empty($status['missing_resources']);
+        return $status;
     }
 }

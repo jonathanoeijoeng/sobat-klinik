@@ -25,9 +25,19 @@
     };
 </script>
 
-<link rel="icon" href="/logo/favicon.png" sizes="any">
+@php
+    $favicon = asset('logo/favicon.png');
+    if (auth()->check()) {
+        $clinic_id = Auth::user()->clinic_id;
+        $clinic = App\Models\Clinic::find($clinic_id);
+        $clinic_name = $clinic->name;
+        $favicon = asset('storage/logo/' . $clinic->logo);
+    }
+@endphp
+
+<link rel="icon" href="{{ $favicon }}" . $logo sizes="any">
 {{-- <link rel="icon" href="/favicon.svg" type="image/svg+xml"> --}}
-<link rel="apple-touch-icon" href="/logo/apple-touch-icon.png">
+{{-- <link rel="apple-touch-icon" href="/logo/apple-touch-icon.png"> --}}
 
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />

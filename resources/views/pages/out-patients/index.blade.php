@@ -40,7 +40,7 @@ new class extends Component {
             $patient = Patient::find($value);
             // Mengambil umur dari accessor yang kamu buat di model
             $this->age = $patient->age_string;
-            $this->visitHistory = OutpatientVisit::with('patient', 'practitioner', 'invoice')->where('patient_id', $value)->orderBy('created_at', 'desc')->take(5)->get();
+            $this->visitHistory = OutpatientVisit::with('patient', 'practitioner', 'invoice')->where('patient_id', $value)->orderBy('created_at', 'desc')->take(3)->get();
         } else {
             $this->currentAge = null;
         }
@@ -63,6 +63,8 @@ new class extends Component {
             'diastole' => 'required|numeric|max:200',
             'weight' => 'required|numeric|max:500',
         ]);
+
+        $initial = Auth::user()->clinic->initial;
         // 1. Logic Generate Visit Number (KS-yymmdd-5char)
         $prefix = 'KS-' . now()->format('ymd') . '-';
 
@@ -78,6 +80,7 @@ new class extends Component {
             $visit = DB::transaction(function () use ($validated, $visitNumber) {
                 // Simpan Data Kunjungan
                 $visit = OutpatientVisit::create([
+                    'clinic_id' => Auth::user()->clinic_id,
                     'visit_number' => $visitNumber,
                     'patient_id' => $this->patient_id,
                     'practitioner_id' => $this->practitioner_id,
@@ -90,6 +93,7 @@ new class extends Component {
 
                 // Simpan Data Pemeriksaan Awal (Tanda Vital)
                 $visit->vitalSign()->create([
+                    'clinic_id' => Auth::user()->clinic_id,
                     'systole' => $this->systole,
                     'diastole' => $this->diastole,
                     'weight' => $this->weight,
@@ -99,6 +103,7 @@ new class extends Component {
 
                 // Simpan Invoice
                 $visit->invoice()->create([
+                    'clinic_id' => Auth::user()->clinic_id,
                     'invoice_number' => 'INV-' . $visitNumber,
                     'registration_fee' => (float) str_replace(',', '', $this->registration_fee),
                     'grand_total' => (float) str_replace(',', '', $this->registration_fee),
@@ -126,27 +131,6 @@ new class extends Component {
 
         // Opsional: Notifikasi sukses ala Flux/Filament
         // Flux::toast(variant: 'success', text: __('Pasien berhasil didaftarkan dengan nomor ' . $visitNumber));
-    }
-
-    public function startConsultation($visitId)
-    {
-        $visit = OutpatientVisit::findOrFail($visitId);
-        $service = app(SatuSehatService::class);
-
-        // 1. Update jam mulai hanya jika masih kosong (biar tidak tertimpa kalau ke-refresh)
-        if (!$visit->in_progress_at) {
-            $visit->update([
-                'in_progress_at' => now(),
-                'status' => 'in-progress', // Opsional: jika kamu pakai kolom status
-                'internal_status' => 'at_practitioner', // Untuk tracking internal
-                'at_practitioner_at' => now(), // Timestamp untuk tracking internal
-            ]);
-        }
-
-        $service->updateEncounterStatusAndDiagnosis($visit, 'in-progress');
-
-        // 2. Redirect ke halaman diagnosis
-        return redirect()->route('outpatient.diagnosis', $visit->id);
     }
 
     public function render()
@@ -294,6 +278,7 @@ new class extends Component {
                                     <th class="px-4 py-2 text-gray-600 uppercase">Tanggal</th>
                                     <th class="px-4 py-2 text-gray-600 uppercase">Dokter</th>
                                     <th class="px-4 py-2 text-gray-600 uppercase">Keluhan</th>
+                                    <th class="px-4 py-2 text-gray-600 uppercase">Status</th>
                                     <th class="px-4 py-2 text-gray-600 uppercase">Invoice status</th>
                                 </tr>
                             </thead>
@@ -303,6 +288,7 @@ new class extends Component {
                                         <td class="px-4 py-2">{{ $visit->arrived_at->format('d M Y') }}</td>
                                         <td class="px-4 py-2">{{ $visit->practitioner->name }}</td>
                                         <td class="px-4 py-2">{{ $visit->complaint }}</td>
+                                        <td class="px-4 py-2">{{ str($visit->status)->headline() }}</td>
                                         <td class="px-4 py-2 capitalize">{{ $visit->invoice->payment_status }}</td>
                                     </tr>
                                 @endforeach
