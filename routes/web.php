@@ -33,6 +33,7 @@ Route::middleware(['auth', 'verified', 'clinic_active'])->group(function () {
     // Settings
     Route::livewire('/settings/master-obat', 'pages::settings.master-obat')->name('settings.master-obat');
     Route::livewire('/settings/master-clinics', 'pages::settings.clinics')->name('settings.master-clinics');
+    Route::livewire('/settings/reset-database', 'pages::settings.reset-database')->name('settings.reset-database');
 });
 
 require __DIR__ . '/settings.php';

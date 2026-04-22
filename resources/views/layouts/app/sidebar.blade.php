@@ -128,6 +128,12 @@
                         {{ __('Master Data Obat') }}
                     </flux:sidebar.item>
                 </div>
+                <div x-show="open" x-collapse class="pl-10 mt-1 space-y-1">
+                    <flux:sidebar.item :href="route('settings.reset-database')"
+                        :current="request()->routeIs('settings.reset-database')" wire:navigate size="sm">
+                        {{ __('Database Reset') }}
+                    </flux:sidebar.item>
+                </div>
             </div>
 
             <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire"

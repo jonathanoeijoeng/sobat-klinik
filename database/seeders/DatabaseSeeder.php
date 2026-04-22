@@ -15,6 +15,7 @@ use App\Models\VitalSign;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 
 
 class DatabaseSeeder extends Seeder
@@ -43,11 +44,13 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $initial = Clinic::find(1)->initial;
+        $jumlahData = Cache::store('file')->get('seeder_jumlah_data', 1267);
+        $rentangHari = Cache::store('file')->get('seeder_rentang_hari', 53);
     
-        for ($i = 0; $i < 1267; $i++) {
+        for ($i = 0; $i < $jumlahData; $i++) {
 
             // 1. Tentukan Waktu Kedatangan (Arrived)
-            $baseTime = Carbon::now()->subDays(rand(1, 53))->setTime(rand(8, 18), rand(0, 59));
+            $baseTime = Carbon::now()->subDays(rand(1, $rentangHari))->setTime(rand(8, 18), rand(0, 59));
 
             $visitNumber = $initial . '-' . $baseTime->format('Ymd') . '-' . str_pad($i + 1, 4, '0', STR_PAD_LEFT);
             $invoiceNumber = 'INV-' . $baseTime->format('Ymd') . '-' . str_pad($i + 1, 4, '0', STR_PAD_LEFT);
