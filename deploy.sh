@@ -42,7 +42,7 @@ else
     # docker exec sobat-klinik-app php artisan vendor:publish --provider="Flux\FluxServiceProvider" --force
     docker exec sobat-klinik-app npm install
     docker exec sobat-klinik-app npm run build
-    # docker exec sobat-klinik-app cp -r /var/www/vendor/livewire/flux/dist/. /var/www/public/flux/
+    docker exec sobat-klinik-app cp -r /var/www/vendor/livewire/flux/dist/. /var/www/public/flux/
 
 fi
 
