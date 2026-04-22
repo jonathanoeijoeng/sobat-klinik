@@ -1,5 +1,5 @@
 <x-header header="Farmasi"
-    description="Modul pengelolaan resep masuk, validasi stok obat, dan finalisasi penyerahan obat kepada pasien. Terintegrasi langsung dengan SatuSehat untuk pelaporan MedicationDispense secara real-time." />
+    description="Modul pengelolaan resep masuk, validasi stok obat, dan finalisasi penyerahan obat kepada pasien. <br>Terintegrasi langsung dengan SatuSehat untuk pelaporan <b>MedicationRequest</b> dan <b>MedicationDispense</b> secara real-time." />
 
 <div class="mt-4 mb-8 flex justify-between items-center">
     <div class='w-md'>

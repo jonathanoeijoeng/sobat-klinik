@@ -4,13 +4,35 @@ use Livewire\Component;
 use App\Models\OutpatientVisit;
 use App\Models\Prescription;
 use App\Models\OutPatientDiagnosis;
+use Livewire\WithPagination;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 new class extends Component {
+    use WithPagination;
+    public string $search = '';
     public $stats = [];
+    public $startDate;
+    public $endDate;
 
     public function mount()
     {
         $this->refreshStats();
+        $this->startDate = now()->startOfMonth()->format('Y-m-d');
+        $this->endDate = now()->endOfMonth()->format('Y-m-d');
+    }
+
+    public function paginationView()
+    {
+        return 'vendor.pagination.tailwind';
+    }
+
+    public function resetFilters()
+    {
+        $this->reset(['search']);
+        $this->startDate = now()->startOfMonth()->format('Y-m-d');
+        $this->endDate = now()->endOfMonth()->format('Y-m-d');
+        $this->resetPage();
     }
 
     public function refreshStats()
@@ -37,19 +59,26 @@ new class extends Component {
 
     public function render()
     {
-        $todayVisits = OutpatientVisit::with(['patient', 'invoice'])
+        $query = OutpatientVisit::with(['patient', 'invoice'])
             ->whereBetween('arrived_at', [now()->startOfMonth(), now()->endOfMonth()])
-            ->latest()
-            ->get();
+            ->when($this->startDate && $this->endDate, function ($query) {
+                $query->whereBetween('arrived_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()]);
+            })
+            ->when($this->search, function ($query) {
+                $query->whereHas('patient', function ($q) {
+                    $q->where('name', 'ilike', '%' . $this->search . '%');
+                });
+            });
         // dd($todayVisits);
 
         // Hitung stats dari koleksi $todayVisits menggunakan method isSynced()
-        $total = $todayVisits->count();
-        $synced = $todayVisits->filter->isSynced()->count(); // Menggunakan higher order proxy
+        $total = (clone $query)->count();
+        $synced = (clone $query)->whereNotNull('satusehat_encounter_id')->count();
         $pending = $total - $synced;
+        $visits = $query->orderBy('arrived_at', 'desc')->paginate(25);
 
         return $this->view([
-            'todayVisits' => $todayVisits,
+            'visits' => $visits,
             'total' => $total,
             'synced' => $synced,
             'pending' => $pending,
@@ -60,7 +89,7 @@ new class extends Component {
 
 <div>
     <x-header header="Dashboard"
-        description="Visualisasi real-time performa klinik, mulai dari volume kunjungan pasien, status antrean farmasi, hingga kesehatan integrasi API SatuSehat. Pantau data transaksi harian dan distribusi diagnosa penyakit secara akurat untuk mendukung pengambilan keputusan klinis dan operasional." />
+        description="Visualisasi real-time performa klinik, mulai dari volume kunjungan pasien, status antrean farmasi, hingga kesehatan <b>integrasi API SatuSehat</b>. <br>Pantau data transaksi harian dan distribusi diagnosa penyakit secara akurat untuk mendukung pengambilan keputusan klinis dan operasional." />
     <div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div class="bg-blue-100 p-4 rounded-lg shadow">
@@ -187,34 +216,54 @@ new class extends Component {
 
         </div>
 
-        <div class="flex gap-3 items-center mt-12 mb-2">
-            <h3 class="text-gray-800 font-bold uppercase tracking-wider">Kunjungan Bulan Ini</h3>
-            <span class="px-2 py-1 bg-brand-50 text-brand-800 text-xs rounded-full font-bold">
-                {{ number_format($todayVisits->count()) }} Kunjungan
-            </span>
+        <div class="flex justify-between items-center mt-12 mb-3">
+            <div class="flex gap-3 items-center">
+                <h3 class="text-gray-800 font-bold uppercase tracking-wider">Daftar Kunjungan Pasien</h3>
+                <span class="px-2 py-1 bg-brand-50 text-brand-800 text-xs rounded-full font-bold">
+                    {{ number_format($visits->count()) }} Kunjungan
+                </span>
+            </div>
+            <div class="flex gap-3 items-center">
+                <x-input wire:model.live.debounce.300ms="search" icon="search" placeholder="Cari nama pasien..."
+                    name="search" type="search" class="py-0" />
+                <div class="flex gap-2 items-center bg-white rounded-lg border border-gray-200 w-fit">
+                    <div class="flex items-center gap-2">
+                        <x-input type="date" wire:model.live="startDate" class="border-none focus:ring-0"
+                            name="start_date" />
+                        <span class="text-gray-400">s/d</span>
+                        <x-input type="date" wire:model.live="endDate" class="border-none focus:ring-0"
+                            name="end_date" />
+                    </div>
+                    @if ($startDate || $endDate)
+                        <button wire:click="resetFilters" class="text-red-500 hover:text-red-700 p-1">
+                            <x-icon name="x-circle" class="w-5 h-5" />
+                        </button>
+                    @endif
+                </div>
+            </div>
         </div>
         <div class="hidden md:block">
             <div class="bg-white rounded-lg shadow overflow-hidden mt-4 border border-zinc-300">
                 <table class="min-w-full leading-normal">
                     <thead>
                         <tr class="bg-gray-50 border-b">
-                            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Waktu</th>
-                            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">No. Kunjungan
+                            <th class="px-5 py-3 text-left text-sm font-black text-gray-800 uppercase">Waktu</th>
+                            <th class="px-5 py-3 text-left text-sm font-black text-gray-800 uppercase">No. Kunjungan
                             </th>
-                            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Pasien</th>
-                            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Dokter
+                            <th class="px-5 py-3 text-left text-sm font-black text-gray-800 uppercase">Pasien</th>
+                            <th class="px-5 py-3 text-left text-sm font-black text-gray-800 uppercase">Dokter
                             </th>
-                            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
-                            <th class="px-5 py-3 text-center text-xs font-semibold text-gray-600 uppercase">SatuSehat
+                            <th class="px-5 py-3 text-left text-sm font-black text-gray-800 uppercase">Status</th>
+                            <th class="px-5 py-3 text-center text-sm font-black text-gray-800 uppercase">SatuSehat
                                 Status
                             </th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($todayVisits as $visit)
+                        @foreach ($visits as $visit)
                             <tr class="border-b">
                                 <td class="px-5 py-4 text-sm">{{ $visit->arrived_at->format('d-M-Y H:i') }}</td>
-                                <td class="px-5 py-4 text-sm font-medium">{{ $visit->visit_number }}</td>
+                                <td class="px-5 py-4 text-sm">{{ $visit->visit_number }}</td>
                                 <td class="px-5 py-4 text-sm">{{ $visit->patient->name }}</td>
                                 <td class="px-5 py-4 text-sm">
                                     {{ $visit->practitioner->name ?? '-' }}
@@ -311,9 +360,12 @@ new class extends Component {
                     </tbody>
                 </table>
             </div>
+            <div class="md:block hidden mt-4">
+                {{ $visits->links() }}
+            </div>
         </div>
         <div class="md:hidden space-y-4 pb-4 mt-6">
-            @foreach ($todayVisits as $visit)
+            @foreach ($visits as $visit)
                 <div
                     class="bg-white dark:bg-zinc-800 rounded-2xl p-4 shadow-sm border-2
                         {{ $visit->status === 'finished' ? 'border-green-200' : 'border-orange-200' }}">

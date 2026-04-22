@@ -55,7 +55,7 @@ new class extends Component {
 
 <div>
     <x-header header="Dokter"
-        description="Dashboard utama bagi praktisi medis untuk memproses kunjungan pasien, meninjau hasil pemeriksaan tanda-tanda vital, dan memberikan instruksi klinis. Pantau status sinkronisasi setiap Resource ID untuk menjamin kelengkapan dokumentasi medis pada setiap episode perawatan." />
+        description="Dashboard utama bagi praktisi medis untuk memproses kunjungan pasien, meninjau hasil pemeriksaan tanda-tanda vital, dan memberikan instruksi klinis. <br>Pantau status sinkronisasi setiap <b>Resource ID</b> untuk menjamin kelengkapan dokumentasi medis pada setiap episode perawatan." />
     <div class="border rounded-lg overflow-x-auto shadow-sm -mx-4 px-4 md:mx-0 md:px-0">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-brand-500">

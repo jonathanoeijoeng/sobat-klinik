@@ -10,17 +10,37 @@ new class extends Component {
     use WithPagination;
     public $currentRoute;
     public string $search = '';
+    public $startDate;
+    public $endDate;
 
     public function mount()
     {
         // Simpan nama route saat halaman pertama kali dibuka
         $this->currentRoute = request()->route()->getName();
+        $this->startDate = now()->startOfMonth()->format('Y-m-d');
+        $this->endDate = now()->endOfMonth()->format('Y-m-d');
+    }
+
+    public function paginationView()
+    {
+        return 'vendor.pagination.tailwind';
+    }
+
+    public function resetFilters()
+    {
+        $this->reset(['search']);
+        $this->startDate = now()->startOfMonth()->format('Y-m-d');
+        $this->endDate = now()->endOfMonth()->format('Y-m-d');
+        $this->resetPage();
     }
 
     public function render()
     {
         $invoices = Invoice::with(['outpatient_visit.patient']) // Eager loading dalam array lebih rapi
             ->whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()])
+            ->when($this->startDate && $this->endDate, function ($query) {
+                $query->whereBetween('paid_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()]);
+            })
             ->when($this->search, function ($query) {
                 $query->where(function ($sub) {
                     // Pencarian di level Invoice
@@ -39,6 +59,9 @@ new class extends Component {
             ->selectRaw('SUM(medicine_total) as total_medicine')
             ->selectRaw('SUM(grand_total) as total_grand')
             ->where('payment_status', 'paid') // Hanya yang sudah lunas
+            ->when($this->startDate && $this->endDate, function ($query) {
+                $query->whereBetween('paid_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()]);
+            })
             ->when($this->search, function ($query) {
                 $query->whereHas('outpatient_visit.patient', function ($q) {
                     $q->where('name', 'ilike', '%' . $this->search . '%');
@@ -56,6 +79,19 @@ new class extends Component {
 
 <div>
     @include('pages.cashier.route')
+    <div class="flex gap-2 items-center bg-white rounded-lg border border-gray-200 mb-3 w-fit">
+        <div class="flex items-center gap-2">
+            <x-input type="date" wire:model.live="startDate" class="border-none focus:ring-0" name="start_date" />
+            <span class="text-gray-400">s/d</span>
+            <x-input type="date" wire:model.live="endDate" class="border-none focus:ring-0" name="end_date" />
+        </div>
+
+        @if ($startDate || $endDate)
+            <button wire:click="resetFilters" class="text-red-500 hover:text-red-700 p-1">
+                <x-icon name="x-circle" class="w-5 h-5" />
+            </button>
+        @endif
+    </div>
 
     <div class="border rounded-lg overflow-x-auto shadow-sm -mx-4 px-4 md:mx-0 md:px-0">
         <table class="min-w-full divide-y divide-gray-200">
@@ -100,28 +136,28 @@ new class extends Component {
                 </tr>
                 @foreach ($invoices as $invoice)
                     <tr>
-                        <td class=" px-6 py-4 text-center text-sm font-medium capitalize">
+                        <td class=" px-6 py-4 text-center text-sm  capitalize">
                             {{ Carbon::parse($invoice->created_at)->format('d M Y') }}
                         </td>
                         <td class=" px-6 py-4">
-                            <div class="font-medium text-gray-900">{{ $invoice->outpatient_visit->patient->name }}</div>
+                            <div class=" text-gray-900">{{ $invoice->outpatient_visit->patient->name }}</div>
                         </td>
-                        <td class=" px-6 py-4 text-center text-sm font-medium uppercase">
+                        <td class=" px-6 py-4 text-center text-sm uppercase">
                             {{ $invoice->payment_status }}
                         </td>
-                        <td class=" px-6 py-4 text-center text-sm font-medium uppercase">
+                        <td class=" px-6 py-4 text-center text-sm uppercase">
                             {{ $invoice->payment_method }}
                         </td>
-                        <td class=" px-6 py-4 text-right font-mono text-sm font-medium">
+                        <td class=" px-6 py-4 text-right font-mono text-sm">
                             IDR {{ number_format($invoice->registration_fee, 0, ',', ',') }}
                         </td>
-                        <td class="px-6 py-4 text-right font-mono text-sm font-medium">
+                        <td class="px-6 py-4 text-right font-mono text-sm">
                             IDR {{ number_format($invoice->practitioner_fee, 0, ',', ',') }}
                         </td>
-                        <td class="px-6 py-4 text-right font-mono text-sm font-medium">
+                        <td class="px-6 py-4 text-right font-mono text-sm">
                             IDR {{ number_format($invoice->medicine_total, 0, ',', ',') }}
                         </td>
-                        <td class="px-6 py-4 text-right font-mono text-sm font-medium">
+                        <td class="px-6 py-4 text-right font-mono text-sm">
                             IDR {{ number_format($invoice->grand_total, 0, ',', ',') }}
                         </td>
                     </tr>

@@ -94,7 +94,7 @@ new class extends Component {
 
 <div>
     <x-header header="Daftar Pasien"
-        description="Kelola data demografi pasien secara terpusat dengan integrasi NIK Nasional. Modul ini memastikan setiap pasien memiliki profil yang valid dan terhubung dengan SatuSehat Patient ID (Logical ID) guna menjamin konsistensi data rekam medis lintas fasilitas kesehatan." />
+        description="Kelola data demografi pasien secara terpusat dengan integrasi NIK Nasional. Modul ini memastikan setiap pasien memiliki profil yang valid dan terhubung dengan <b>SatuSehat Patient ID (Logical ID)</b> guna menjamin konsistensi data rekam medis lintas fasilitas kesehatan." />
     <div class="flex flex-col md:flex-row md:items-center md:justify-between">
         <x-input wire:model.live.debounce.100ms="search" name="search" placeholder="Cari pasien..."
             class="mb-4 md:max-w-lg w-full" />
