@@ -27,30 +27,35 @@ new class extends Component {
 
         $this->validate();
 
-        Cache::put('seeder_status', 'running', now()->addMinutes(10));
+        $statusFile = storage_path('app/seeder_status.txt');
+        file_put_contents($statusFile, 'running');
         $this->status = 'running';
 
         RunDatabaseSeeder::dispatch($this->jumlahData, $this->rentangHari);
     }
 
-    // Polling setiap 2 detik, hanya aktif saat status running
-    #[Poll(750, if: "status === 'running'")]
     public function checkStatus()
     {
         if ($this->status !== 'running') {
             return;
-        } // early return jika tidak running
+        }
 
-        $cacheStatus = Cache::get('seeder_status', 'idle');
+        $statusFile = storage_path('app/seeder_status.txt');
+
+        if (!file_exists($statusFile)) {
+            return;
+        }
+
+        $cacheStatus = trim(file_get_contents($statusFile));
+
+        $this->message = 'Status: ' . $cacheStatus . ' | ' . now()->format('H:i:s');
 
         if (str_starts_with($cacheStatus, 'error:')) {
             $this->status = 'error';
             $this->message = str_replace('error:', '', $cacheStatus);
-        } else {
-            $this->status = $cacheStatus;
-            if ($cacheStatus === 'done') {
-                $this->message = "Berhasil! {$this->jumlahData} data dibuat dengan rentang {$this->rentangHari} hari.";
-            }
+        } elseif ($cacheStatus === 'done') {
+            $this->status = 'done';
+            $this->message = "Berhasil! {$this->jumlahData} data dibuat.";
         }
     }
 
@@ -96,7 +101,7 @@ new class extends Component {
                 </div>
             @endif
         @elseif ($status === 'running')
-            <div class="flex flex-col items-center py-6 space-y-3">
+            <div class="flex flex-col items-center py-6 space-y-3" wire:poll.750ms="checkStatus">
                 <svg class="animate-spin h-10 w-10 text-blue-500" viewBox="0 0 24 24" fill="none">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                         stroke-width="4" />
@@ -104,6 +109,8 @@ new class extends Component {
                 </svg>
                 <p class="text-gray-600 font-medium">Sedang proses, mohon tunggu...</p>
                 <p class="text-gray-400 text-sm">migrate:fresh --seed sedang berjalan di background</p>
+                {{-- Debug --}}
+                <p class="text-red-500 text-xs font-mono">{{ $message }}</p>
             </div>
         @elseif ($status === 'done')
             <div class="p-4 bg-green-100 text-green-800 rounded-lg text-sm">

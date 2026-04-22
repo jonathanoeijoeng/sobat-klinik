@@ -24,19 +24,20 @@ class RunDatabaseSeeder implements ShouldQueue
     ) {}
 
     public function handle(): void
-    {
-        Cache::put('seeder_status', 'running', now()->addMinutes(10));
+{
+    $statusFile = storage_path('app/seeder_status.txt');
+    
+    file_put_contents($statusFile, 'running');
 
-        try {
-            // Simpan ke cache SEBELUM artisan call
-            Cache::store('file')->put('seeder_jumlah_data', $this->jumlahData, now()->addMinutes(10));
-            Cache::store('file')->put('seeder_rentang_hari', $this->rentangHari, now()->addMinutes(10));
+    try {
+        Cache::store('file')->put('seeder_jumlah_data', $this->jumlahData, now()->addMinutes(10));
+        Cache::store('file')->put('seeder_rentang_hari', $this->rentangHari, now()->addMinutes(10));
 
-            Artisan::call('migrate:fresh', ['--seed' => true]);
+        Artisan::call('migrate:fresh', ['--seed' => true]);
 
-            Cache::put('seeder_status', 'done', now()->addMinutes(10));
-        } catch (\Exception $e) {
-            Cache::put('seeder_status', 'error:' . $e->getMessage(), now()->addMinutes(10));
-        }
+        file_put_contents($statusFile, 'done');
+    } catch (\Exception $e) {
+        file_put_contents($statusFile, 'error:' . $e->getMessage());
     }
+}
 }
