@@ -119,7 +119,7 @@ new class extends Component {
                 <tr class="bg-slate-200">
                     <td colspan="4"
                         class="px-6 py-4 text-center text-sm font-bold text-gray-900 uppercase tracking-widest">
-                        Total Bulan Ini
+                        Total
                     </td>
                     <td class="px-6 py-4 text-right font-mono text-sm font-bold">
                         IDR {{ number_format($totals->total_reg, 0, ',', ',') }}

@@ -57,10 +57,25 @@ new class extends Component {
         ];
     }
 
+    public function getTopMedicines()
+    {
+        return Prescription::query()
+            ->select('medicine_id', 'medicine_name', 'uom')
+            ->selectRaw('SUM(qty_dispensed) as total_qty')
+            ->selectRaw('COUNT(*) as total_resep') // Opsional: berapa kali obat ini muncul di resep berbeda
+            ->where('status', 'dispensed') // Pastikan hanya menghitung obat yang benar-benar sudah diberikan
+            ->when($this->startDate && $this->endDate, function ($q) {
+                $q->whereBetween('dispensed_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()]);
+            })
+            ->groupBy('medicine_id', 'medicine_name', 'uom')
+            ->orderByDesc('total_qty')
+            ->limit(10) // Ambil Top 10 saja
+            ->get();
+    }
+
     public function render()
     {
         $query = OutpatientVisit::with(['patient', 'invoice'])
-            ->whereBetween('arrived_at', [now()->startOfMonth(), now()->endOfMonth()])
             ->when($this->startDate && $this->endDate, function ($query) {
                 $query->whereBetween('arrived_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()]);
             })
@@ -69,13 +84,14 @@ new class extends Component {
                     $q->where('name', 'ilike', '%' . $this->search . '%');
                 });
             });
-        // dd($todayVisits);
 
         // Hitung stats dari koleksi $todayVisits menggunakan method isSynced()
         $total = (clone $query)->count();
         $synced = (clone $query)->whereNotNull('satusehat_encounter_id')->count();
         $pending = $total - $synced;
         $visits = $query->orderBy('arrived_at', 'desc')->paginate(25);
+
+        $medicines = Prescription::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->count();
 
         return $this->view([
             'visits' => $visits,
@@ -216,6 +232,35 @@ new class extends Component {
 
         </div>
 
+        {{-- Top 10 Obat --}}
+        <div class="hidden md:block">
+            <div class="bg-white rounded-lg shadow overflow-hidden mt-12 border border-zinc-300">
+                <table class="w-full text-sm text-left border">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 uppercase">Nama Obat</th>
+                            <th class="px-4 py-2 text-center uppercase">Frekuensi Resep</th>
+                            <th class="px-4 py-2 text-right uppercase">Total Keluar</th>
+                            <th class="px-4 py-2 text-right uppercase">Satuan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($this->getTopMedicines() as $medicine)
+                            <tr class="border-b">
+                                <td class="px-4 py-2">{{ $medicine->medicine_name }}</td>
+                                <td class="px-4 py-2 text-center font-mono">{{ number_format($medicine->total_resep) }}
+                                    x</td>
+                                <td class="px-4 py-2 text-right font-mono">
+                                    {{ number_format($medicine->total_qty) }}
+                                </td>
+                                <td class="px-4 py-2 text-gray-500 text-right">{{ $medicine->uom }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="flex justify-between items-center mt-12 mb-3">
             <div class="flex gap-3 items-center">
                 <h3 class="text-gray-800 font-bold uppercase tracking-wider">Daftar Kunjungan Pasien</h3>
@@ -268,7 +313,8 @@ new class extends Component {
                                 <td class="px-5 py-4 text-sm">
                                     {{ $visit->practitioner->name ?? '-' }}
                                 </td>
-                                <td class="px-5 py-4 text-sm capitalize">{{ str($visit->internal_status)->headline() }}
+                                <td class="px-5 py-4 text-sm capitalize">
+                                    {{ str($visit->internal_status)->headline() }}
                                 </td>
                                 <td class="px-4 py-3 w-75">
                                     @php

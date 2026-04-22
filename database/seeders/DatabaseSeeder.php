@@ -42,11 +42,15 @@ class DatabaseSeeder extends Seeder
             'clinic_id' => 1
         ]);
 
-        for ($i = 0; $i < 150; $i++) {
+        $initial = Clinic::find(1)->initial;
+    
+        for ($i = 0; $i < 1267; $i++) {
 
             // 1. Tentukan Waktu Kedatangan (Arrived)
-            $baseTime = Carbon::now()->subDays(rand(1, 15))->setTime(rand(8, 18), rand(0, 59));
-            $initial = Clinic::find(1)->initial;
+            $baseTime = Carbon::now()->subDays(rand(1, 53))->setTime(rand(8, 18), rand(0, 59));
+
+            $visitNumber = $initial . '-' . $baseTime->format('Ymd') . '-' . str_pad($i + 1, 4, '0', STR_PAD_LEFT);
+            $invoiceNumber = 'INV-' . $baseTime->format('Ymd') . '-' . str_pad($i + 1, 4, '0', STR_PAD_LEFT);
 
             // Simulasi Alur Waktu (TAT)
             $arrivedAt = $baseTime;
@@ -67,7 +71,7 @@ class DatabaseSeeder extends Seeder
             // 2. Buat Outpatient Visit
             $visit = OutpatientVisit::create([
                 'clinic_id'       => 1, // Asumsi id klinik 1
-                'visit_number'    => $initial . '-' . $arrivedAt->format('Ymd') . '-' . str_pad($i + 1, 4, '0', STR_PAD_LEFT),
+                'visit_number'    => $visitNumber,
                 'patient_id'      => rand(1, 10),
                 'practitioner_id' => $doctorId,
                 'location_id'     => rand(1, 3), // ID Poli
@@ -164,7 +168,6 @@ class DatabaseSeeder extends Seeder
             }
 
             // 6. Buat Invoice (Fee Dokter + Total Obat)
-            $invoiceNumber = 'KS-' . $arrivedAt->format('Ymd') . '-' . str_pad($i++, 4, '0', STR_PAD_LEFT);
 
             Invoice::create([
                 'clinic_id'           => 1,
