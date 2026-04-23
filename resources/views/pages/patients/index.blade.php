@@ -95,7 +95,7 @@ new class extends Component {
 <div>
     <x-header header="Daftar Pasien"
         description="Kelola data demografi pasien secara terpusat dengan integrasi NIK Nasional. Modul ini memastikan setiap pasien memiliki profil yang valid dan terhubung dengan <b>SatuSehat Patient ID (Logical ID)</b> guna menjamin konsistensi data rekam medis lintas fasilitas kesehatan." />
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mt-4">
         <x-input wire:model.live.debounce.100ms="search" name="search" placeholder="Cari pasien..."
             class="mb-4 md:max-w-lg w-full" />
         <x-button wire:click="newPatient" class="mb-4" color="brand">Registrasi Baru</x-button>
@@ -105,7 +105,7 @@ new class extends Component {
             <thead class="bg-brand-500">
                 <tr>
                     <th
-                        class="w-px whitespace-nowrap px-4 md:px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-widest">
+                        class="w-auto whitespace-nowrap px-4 md:px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-widest">
                         Nama / NIK
                     </th>
                     <th
@@ -116,7 +116,7 @@ new class extends Component {
                         class="w-px whitespace-nowrap px-4 md:px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
                         Phone</th>
                     <th
-                        class="w-px whitespace-nowrap px-4 md:px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
+                        class="w-px whitespace-nowrap px-4 md:px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest hidden md:table-cell">
                         L/P</th>
                     <th class="px-4 md:px-12 py-4 text-right text-sm font-bold text-white uppercase tracking-widest">
                         Aksi</th>
@@ -125,17 +125,32 @@ new class extends Component {
             <tbody class="bg-white divide-y divide-gray-200">
                 @foreach ($patients as $patient)
                     <tr>
-                        <td class="w-px px-4 md:px-6 py-4">
+                        <td class="w-auto md:w-px px-4 md:px-6 py-4">
                             <div class="flex items-start">
-                                <div>
-                                    <div class="text-sm font-medium text-gray-900">{{ $patient->name }}</div>
-                                    <div class="text-xs text-gray-500">{{ $patient->nik }}</div>
-                                </div>
+                                <div class="text-sm font-medium text-gray-900">{{ $patient->name }}</div>
                                 <img src="/logo/satusehat.png" alt="avatar"
-                                    class="w-3 h-3 rounded-full object-cover mt-1 ml-1">
+                                    class="w-3 h-3 rounded-full object-cover mt-1 ml-1 block md:hidden">
+                            </div>
+                            <div class="text-xs text-gray-500">{{ $patient->nik }}</div>
+                            <div class="text-xs text-gray-500 flex items-center md:hidden">
+                                @if ($patient->gender === 'male')
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="blue"
+                                        class="h-5 w-5 mr-1">
+                                        <path
+                                            d="M15.0491 8.53666L18.5858 5H14V3H22V11H20V6.41421L16.4633 9.95088C17.4274 11.2127 18 12.7895 18 14.5C18 18.6421 14.6421 22 10.5 22C6.35786 22 3 18.6421 3 14.5C3 10.3579 6.35786 7 10.5 7C12.2105 7 13.7873 7.57264 15.0491 8.53666ZM10.5 20C13.5376 20 16 17.5376 16 14.5C16 11.4624 13.5376 9 10.5 9C7.46243 9 5 11.4624 5 14.5C5 17.5376 7.46243 20 10.5 20Z">
+                                        </path>
+                                    </svg>
+                                @elseif ($patient->gender === 'female')
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="red"
+                                        class="h-5 w-5 mr-1 rotate-45">
+                                        <path
+                                            d="M11 15.9339C7.33064 15.445 4.5 12.3031 4.5 8.5C4.5 4.35786 7.85786 1 12 1C16.1421 1 19.5 4.35786 19.5 8.5C19.5 12.3031 16.6694 15.445 13 15.9339V18H18V20H13V24H11V20H6V18H11V15.9339ZM12 14C15.0376 14 17.5 11.5376 17.5 8.5C17.5 5.46243 15.0376 3 12 3C8.96243 3 6.5 5.46243 6.5 8.5C6.5 11.5376 8.96243 14 12 14Z">
+                                        </path>
+                                    </svg>
+                                @endif
                             </div>
                         </td>
-                        <td class="text-sm w-px whitespace-nowrap px-4 md:px-6 py-4 hidden md:table-cell">
+                        <td class="text-sm w-auto whitespace-nowrap px-4 md:px-6 py-4 hidden md:table-cell">
                             @if ($patient->satusehat_patient_id)
                                 <span
                                     class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
@@ -148,9 +163,10 @@ new class extends Component {
                                 </span>
                             @endif
                         </td>
-                        <td class="w-px whitespace-nowrap px-4 md:px-6 py-4 text-center text-sm font-medium">
+                        <td class="w-px whitespace-nowrap px-4 md:px-6 py-4 text-center text-sm font-medium ">
                             {{ $patient->phone_number }}</td>
-                        <td class="w-px whitespace-nowrap md:px-4 px-6 py-4 text-center text-sm font-medium">
+                        <td
+                            class="w-px whitespace-nowrap md:px-4 px-6 py-4 text-center text-sm font-medium hidden md:table-cell">
                             {{ $patient->gender === 'female' ? 'Wanita' : 'Pria' }}</td>
                         <td class="px-4 md:px-12 py-4 text-right text-sm font-medium">
                             <button class="text-blue-600 hover:text-blue-900">Detail</button>

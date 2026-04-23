@@ -156,7 +156,7 @@ new class extends Component {
 
     <x-button wire:click="openModal" class="mb-4" color="brand">Registrasi Baru</x-button>
 
-    <div class="border rounded-lg overflow-x-auto shadow-sm -mx-4 px-4 md:mx-0 md:px-0">
+    <div class="border rounded-lg overflow-x-auto shadow-sm -mx-4 md:mx-0 md:px-0">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-brand-500">
                 <tr>
