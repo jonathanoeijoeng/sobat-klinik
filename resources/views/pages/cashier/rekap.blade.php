@@ -79,7 +79,8 @@ new class extends Component {
 
 <div>
     @include('pages.cashier.route')
-    <div class="flex gap-2 items-center bg-white rounded-lg border border-gray-200 mb-3 w-fit">
+    <div
+        class="flex justify-between pr-2  gap-2 items-center bg-white rounded-lg border border-gray-200 mb-3 w-full md:w-fit">
         <div class="flex items-center gap-2">
             <x-input type="date" wire:model.live="startDate" class="border-none focus:ring-0" name="start_date" />
             <span class="text-gray-400">s/d</span>
@@ -93,77 +94,86 @@ new class extends Component {
         @endif
     </div>
 
-    <div class="border rounded-lg overflow-x-auto shadow-sm -mx-4 px-4 md:mx-0 md:px-0">
+    <div class="border rounded-lg overflow-x-auto shadow-sm md:mx-0 md:px-0">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-brand-500">
                 <tr>
-                    <th class="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-widest">
+                    <th
+                        class="px-3 md:px-6 py-4 text-left text-xs md:text-sm font-bold text-white uppercase tracking-widest">
                         Tanggal
                     </th>
-                    <th class="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-widest">
+                    <th
+                        class="px-3 md:px-6 py-4 text-left text-xs md:text-sm font-bold text-white uppercase tracking-widest">
                         Nama</th>
-                    <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
+                    <th
+                        class="px-3 md:px-6 py-4 text-center text-xs md:text-sm font-bold text-white uppercase tracking-widest">
                         Status</th>
-                    <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
+                    <th
+                        class="px-3 md:px-6 py-4 text-center text-xs md:text-sm font-bold text-white uppercase tracking-widest">
                         Method</th>
-                    <th class="px-6 py-4 text-right text-sm font-bold text-white uppercase tracking-widest">
+                    <th
+                        class="px-3 md:px-6 py-4 text-right text-xs md:text-sm font-bold text-white uppercase tracking-widest">
                         Registration</th>
-                    <th class="px-6 py-4 text-right text-sm font-bold text-white uppercase tracking-widest">
+                    <th
+                        class="px-3 md:px-6 py-4 text-right text-xs md:text-sm font-bold text-white uppercase tracking-widest">
                         Dokter</th>
-                    <th class="px-6 py-4 text-right text-sm font-bold text-white uppercase tracking-widest">
+                    <th
+                        class="px-3 md:px-6 py-4 text-right text-xs md:text-sm font-bold text-white uppercase tracking-widest">
                         Obat</th>
-                    <th class="px-6 py-4 text-right text-sm font-bold text-white uppercase tracking-widest">Total</th>
+                    <th
+                        class="px-3 md:px-6 py-4 text-right text-xs md:text-sm font-bold text-white uppercase tracking-widest">
+                        Total</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 <tr class="bg-slate-200">
                     <td colspan="4"
-                        class="px-6 py-4 text-center text-sm font-bold text-gray-900 uppercase tracking-widest">
+                        class="px-3 md:px-6 py-4 text-center text-xs md:text-sm font-bold text-gray-900 uppercase tracking-widest">
                         Total
                     </td>
-                    <td class="px-6 py-4 text-right font-mono text-sm font-bold">
+                    <td class="px-3 md:px-6 py-4 text-right font-mono text-xs md:text-sm font-bold">
                         IDR {{ number_format($totals->total_reg, 0, ',', ',') }}
                     </td>
-                    <td class="px-6 py-4 text-right font-mono text-sm font-bold">
+                    <td class="px-3 md:px-6 py-4 text-right font-mono text-xs md:text-sm font-bold">
                         IDR {{ number_format($totals->total_practitioner, 0, ',', ',') }}
                     </td>
-                    <td class="px-6 py-4 text-right font-mono text-sm font-bold">
+                    <td class="px-3 md:px-6 py-4 text-right font-mono text-xs md:text-sm font-bold">
                         IDR {{ number_format($totals->total_medicine, 0, ',', ',') }}
                     </td>
-                    <td class="px-6 py-4 text-right font-mono text-sm font-bold">
+                    <td class="px-3 md:px-6 py-4 text-right font-mono text-xs md:text-sm font-bold">
                         IDR {{ number_format($totals->total_grand, 0, ',', ',') }}
                     </td>
                 </tr>
                 @forelse ($invoices as $invoice)
                     <tr>
-                        <td class=" px-6 py-4 text-center text-sm  capitalize">
+                        <td class=" px-3 md:px-6 py-4 text-center text-xs md:text-sm  capitalize">
                             {{ Carbon::parse($invoice->created_at)->format('d M Y') }}
                         </td>
-                        <td class=" px-6 py-4">
+                        <td class=" px-3 md:px-6 py-4 text-xs md:text-sm">
                             <div class=" text-gray-900">{{ $invoice->outpatient_visit->patient->name }}</div>
                         </td>
-                        <td class=" px-6 py-4 text-center text-sm uppercase">
+                        <td class=" px-3 md:px-6 py-4 text-center text-xs md:text-sm uppercase">
                             {{ $invoice->payment_status }}
                         </td>
-                        <td class=" px-6 py-4 text-center text-sm uppercase">
+                        <td class=" px-3 md:px-6 py-4 text-center text-xs md:text-sm uppercase">
                             {{ $invoice->payment_method }}
                         </td>
-                        <td class=" px-6 py-4 text-right font-mono text-sm">
+                        <td class=" px-3 md:px-6 py-4 text-right font-mono text-xs md:text-sm">
                             IDR {{ number_format($invoice->registration_fee, 0, ',', ',') }}
                         </td>
-                        <td class="px-6 py-4 text-right font-mono text-sm">
+                        <td class="px-3 md:px-6 py-4 text-right font-mono text-xs md:text-sm">
                             IDR {{ number_format($invoice->practitioner_fee, 0, ',', ',') }}
                         </td>
-                        <td class="px-6 py-4 text-right font-mono text-sm">
+                        <td class="px-3 md:px-6 py-4 text-right font-mono text-xs md:text-sm">
                             IDR {{ number_format($invoice->medicine_total, 0, ',', ',') }}
                         </td>
-                        <td class="px-6 py-4 text-right font-mono text-sm">
+                        <td class="px-3 md:px-6 py-4 text-right font-mono text-xs md:text-sm">
                             IDR {{ number_format($invoice->grand_total, 0, ',', ',') }}
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="px-6 py-4 text-center text-sm font-medium">
+                        <td colspan="8" class="px-3 md:px-6 py-4 text-center text-xs md:text-sm font-medium">
                             <x-nodatafound />
                         </td>
                     </tr>
