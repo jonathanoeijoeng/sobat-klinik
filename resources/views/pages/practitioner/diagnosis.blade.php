@@ -518,17 +518,17 @@ new class extends Component {
             {{-- Mobile Version --}}
             <div class="block md:hidden p-4 space-y-2">
                 <div class="flex justify-between border-b pb-1">
-                    <span class="text-xs text-gray-500">Nama</span>
-                    <span class="text-xs font-bold text-right">{{ $visit->patient->name }}</span>
+                    <span class="text-sm text-gray-500">Nama</span>
+                    <span class="text-sm font-bold text-right">{{ $visit->patient->name }}</span>
                 </div>
                 <div class="flex justify-between border-b pb-1">
-                    <span class="text-xs text-gray-500">No. RM</span>
-                    <span class="text-xs font-bold font-mono">{{ $visit->patient->medical_record_number }}</span>
+                    <span class="text-sm text-gray-500">No. RM</span>
+                    <span class="text-sm font-bold font-mono">{{ $visit->patient->medical_record_number }}</span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-xs text-gray-500">Status</span>
+                    <span class="text-sm text-gray-500">Status</span>
                     <span
-                        class="text-[10px] px-2 bg-brand-100 text-brand-700 rounded-full font-bold uppercase">{{ $visit->status }}</span>
+                        class="text-xs py-1 px-2 bg-brand-100 text-brand-700 rounded-full font-bold uppercase">{{ $visit->status }}</span>
                 </div>
             </div>
         </div>
@@ -542,27 +542,27 @@ new class extends Component {
                     <h4 class="font-bold text-gray-700 border-b pb-2 mb-4 flex justify-between items-center">
                         Vital Signs
                         <span
-                            class="md:hidden text-[10px] bg-slate-100 px-2 py-0.5 rounded italic font-normal text-gray-400">Status
+                            class="md:hidden text-[10px] bg-slate-100 px-2 py-0.5 rounded font-normal text-gray-400">Status
                             Terkini</span>
                     </h4>
                     @if ($visit->vitalSign)
                         <div class="grid grid-cols-2 md:grid-cols-1 gap-y-3 gap-x-4">
                             <div class="flex justify-between md:block">
-                                <span class="text-gray-500 text-xs md:text-sm">TD (Tensi)</span>
+                                <span class="text-gray-500 text-sm">TD (Tensi)</span>
                                 <span class="block font-mono font-bold text-brand-600 text-sm md:text-base">
                                     {{ $visit->vitalSign->systole }}/{{ $visit->vitalSign->diastole }}
                                     <small>mmHg</small>
                                 </span>
                             </div>
                             <div class="flex justify-between md:block">
-                                <span class="text-gray-500 text-xs md:text-sm">BB / TB</span>
+                                <span class="text-gray-500 text-sm">BB / TB</span>
                                 <span class="block font-bold text-sm md:text-base">
                                     {{ $visit->vitalSign->weight ?? '-' }} <small>kg</small> /
                                     {{ $visit->vitalSign->height ?? '-' }} <small>cm</small>
                                 </span>
                             </div>
                             <div class="flex justify-between md:block col-span-2 border-t pt-2">
-                                <span class="text-gray-500 text-xs md:text-sm">Suhu Tubuh</span>
+                                <span class="text-gray-500 text-sm">Suhu Tubuh</span>
                                 <span class="block font-bold text-brand-500 text-sm md:text-base">
                                     {{ $visit->vitalSign->temperature ?? '-' }} <small>°C</small>
                                 </span>
@@ -580,15 +580,15 @@ new class extends Component {
                         @forelse ($histories as $history)
                             <div
                                 class="border border-gray-200 rounded-lg p-3 bg-slate-50 border-l-4 md:border-l-8 border-l-green-500 shadow-sm">
-                                <div class="flex justify-between text-[10px] md:text-sm mb-2">
+                                <div class="flex justify-between text-sm mb-2">
                                     <span
                                         class="text-gray-500">{{ Carbon::parse($history->started_at)->format('d M Y') }}</span>
                                     <span class="font-semibold uppercase text-green-600">{{ $history->status }}</span>
                                 </div>
                                 <div class="p-2 bg-white border border-slate-100 rounded mb-2">
-                                    <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">Diagnosa</p>
+                                    <p class="text-sm text-gray-400 font-bold uppercase mb-1">Diagnosa</p>
                                     @foreach ($history->diagnoses as $diagnosis)
-                                        <div class="text-xs mb-1">
+                                        <div class="text-sm mb-1">
                                             <span
                                                 class="font-bold text-brand-700">[{{ $diagnosis->icd10_code }}]</span>
                                             <span
@@ -641,7 +641,7 @@ new class extends Component {
 
                     {{-- List Diagnosa --}}
                     <div class="mt-6">
-                        <h5 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b mb-3 pb-1">
+                        <h5 class="text-xs font-bold text-gray-400 uppercase tracking-widest border-b mb-3 pb-1">
                             Daftar Diagnosa Aktif</h5>
                         <div class="space-y-2">
                             @foreach ($visit->diagnoses as $diag)
@@ -724,12 +724,12 @@ new class extends Component {
                         {{-- Mobile optimized selector --}}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase mb-2">Frekuensi & Waktu</p>
+                                <p class="text-sm font-bold text-gray-400 uppercase mb-2">Frekuensi & Waktu</p>
                                 <div class="flex flex-wrap gap-1.5">
                                     @foreach ($opsi['frekuensi'] as $item)
                                         <button wire:click="$set('frekuensi', '{{ $item }}')"
                                             @class([
-                                                'text-[11px] px-3 py-1 rounded-full border transition',
+                                                'text-sm px-3 py-1 rounded-full border transition',
                                                 'bg-brand-600 text-white border-brand-600' => $frekuensi === $item,
                                                 'bg-white text-gray-600 border-gray-200' => $frekuensi !== $item,
                                             ])>
@@ -739,12 +739,12 @@ new class extends Component {
                                 </div>
                             </div>
                             <div>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase mb-2">Makan</p>
+                                <p class="text-sm font-bold text-gray-400 uppercase mb-2">Makan</p>
                                 <div class="flex flex-wrap gap-1.5">
                                     @foreach ($opsi['waktuMakan'] as $item)
                                         <button wire:click="$set('waktuMakan', '{{ $item }}')"
                                             @class([
-                                                'text-[11px] px-3 py-1 rounded-full border transition',
+                                                'text-sm px-3 py-1 rounded-full border transition',
                                                 'bg-brand-600 text-white border-brand-600' => $waktuMakan === $item,
                                                 'bg-white text-gray-600 border-gray-200' => $waktuMakan !== $item,
                                             ])>
@@ -772,7 +772,7 @@ new class extends Component {
 
                     {{-- List Resep --}}
                     <div class="mt-6 space-y-2">
-                        <h5 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b mb-3 pb-1">
+                        <h5 class="text-xs font-bold text-gray-400 uppercase tracking-widest border-b mb-3 pb-1">
                             Daftar Resep</h5>
                         @foreach ($visit->prescriptions as $pres)
                             <div
