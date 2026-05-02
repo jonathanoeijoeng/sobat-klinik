@@ -154,63 +154,65 @@ new class extends Component {
     <x-header header="Rawat Jalan"
         description="Pusat kendali aktivitas klinis mulai dari pemeriksaan tanda-tanda vital <b>(Observation)</b>, penegakan diagnosa <b>(Condition)</b>, hingga pemberian tindakan medis <b>(Procedure)</b>. <br>Seluruh data medis dipetakan menggunakan standar kodifikasi <b>ICD-10 dan ICD-9-CM</b> untuk sinkronisasi otomatis ke <b>Resume Medis SatuSehat.</b>" />
 
-    <x-button wire:click="openModal" class="mb-4" color="brand">Registrasi Baru</x-button>
+    <x-button wire:click="openModal" class="my-4" color="brand">Registrasi Baru</x-button>
 
-    <div class="border rounded-lg overflow-x-auto shadow-sm -mx-4 md:mx-0 md:px-0">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-brand-500">
-                <tr>
-                    <th class="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-widest">
-                        Nama
-                    </th>
-                    <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
-                        Status</th>
-                    <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
-                        L/P</th>
-                    <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
-                        Tekanan darah</th>
-                    <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
-                        Tinggi/Berat badan</th>
-                    <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
-                        Keluhan</th>
-                    <th class="px-12 py-4 text-right text-sm font-bold text-white uppercase tracking-widest">Aksi</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                @forelse ($outpatientVisits as $visit)
+    <div class="hidden md:block">
+        <div class="border rounded-lg overflow-x-auto shadow-sm md:mx-0 md:px-0">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-brand-500">
                     <tr>
-                        <td class=" px-6 py-4">
-                            <div class="font-medium text-gray-900">{{ $visit->patient->name }}</div>
-                        </td>
-                        <td class=" px-6 py-4 text-center text-sm font-medium capitalize">
-                            {{ $visit->status }}</td>
-                        <td class=" px-6 py-4 text-center text-sm font-medium">
-                            {{ $visit->gender === 'female' ? 'Wanita' : 'Pria' }}</td>
-                        <td class=" px-6 py-4 text-center text-sm font-medium">
-                            {{ $visit->vitalSign->systole }}/{{ $visit->vitalSign->diastole }} mmHg </td>
-                        <td class=" px-6 py-4 text-center text-sm font-medium">
-                            {{ $visit->vitalSign->height }} cm /
-                            {{ number_format($visit->vitalSign->weight, 1, '.', ',') }} kg </td>
-                        <td class="px-6 py-4 text-center text-sm font-medium">
-                            {{ $visit->complaint }} </td>
-                        <td class="px-12 py-4 text-right text-sm font-medium">
-                            <a class="text-blue-600 hover:text-blue-900 cursor-pointer"
-                                {{ $visit->status === 'finished' ? 'disabled' : '' }}
-                                wire:click="startConsultation({{ $visit->id }})">{{ $visit->status === 'finished' ? 'Finished' : 'Input Diagnosa' }}</a>
-                        </td>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-widest">
+                            Nama
+                        </th>
+                        <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
+                            Status</th>
+                        <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
+                            L/P</th>
+                        <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
+                            Tekanan darah</th>
+                        <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
+                            Tinggi/Berat badan</th>
+                        <th class="px-6 py-4 text-center text-sm font-bold text-white uppercase tracking-widest">
+                            Keluhan</th>
+                        {{-- <th class="px-12 py-4 text-right text-sm font-bold text-white uppercase tracking-widest">Aksi</th> --}}
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="7" class="px-6 py-4 text-center text-sm font-medium">
-                            <x-nodatafound />
-                        </td>
-                    </tr>
-                @endif
-            </tbody>
-        </table>
-    </div>
-    <div class="md:block hidden mt-4">
-        {{ $outpatientVisits->links() }}
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @forelse ($outpatientVisits as $visit)
+                        <tr>
+                            <td class=" px-6 py-4">
+                                <div class="font-medium text-gray-900">{{ $visit->patient->name }}</div>
+                            </td>
+                            <td class=" px-6 py-4 text-center text-sm font-medium capitalize">
+                                {{ $visit->status }}</td>
+                            <td class=" px-6 py-4 text-center text-sm font-medium">
+                                {{ $visit->gender === 'female' ? 'Wanita' : 'Pria' }}</td>
+                            <td class=" px-6 py-4 text-center text-sm font-medium">
+                                {{ $visit->vitalSign->systole }}/{{ $visit->vitalSign->diastole }} mmHg </td>
+                            <td class=" px-6 py-4 text-center text-sm font-medium">
+                                {{ $visit->vitalSign->height }} cm /
+                                {{ number_format($visit->vitalSign->weight, 1, '.', ',') }} kg </td>
+                            <td class="px-6 py-4 text-center text-sm font-medium">
+                                {{ $visit->complaint }} </td>
+                            {{-- <td class="px-12 py-4 text-right text-sm font-medium">
+                                <a class="text-blue-600 hover:text-blue-900 cursor-pointer"
+                                    {{ $visit->status === 'finished' ? 'disabled' : '' }}
+                                    wire:click="startConsultation({{ $visit->id }})">{{ $visit->status === 'finished' ? 'Finished' : 'Input Diagnosa' }}</a>
+                            </td> --}}
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-6 py-4 text-center text-sm font-medium">
+                                <x-nodatafound />
+                            </td>
+                        </tr>
+                    @endif
+                </tbody>
+            </table>
+        </div>
+        <div class="md:block hidden mt-4">
+            {{ $outpatientVisits->links() }}
+        </div>
     </div>
 
     <div x-data="{ open: @entangle('showModal') }" x-show="open"
@@ -317,4 +319,80 @@ new class extends Component {
         </div>
     </div>
 
+    {{-- Mobile version --}}
+    <div class="md:hidden space-y-4 pb-4 mt-2">
+        @foreach ($outpatientVisits as $visit)
+            <div @php
+$statusColors = [
+                'arrived'   => 'border-l-green-500',
+                'completed' => 'border-l-green-500',
+                ];
+
+                // Ambil warna berdasarkan status, jika tidak ada di list maka default ke orange
+                $borderColor = $statusColors[$visit->internal_status] ?? 'border-orange-500'; @endphp
+                class="bg-white dark:bg-zinc-800 rounded-2xl p-4 shadow-sm border border-l-8 {{ $borderColor }}">
+
+                {{-- Top Section --}}
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <span class="font-semibold text-base leading-tight flex items-center gap-2">
+                            {{ $visit->patient->name }}
+                        </span>
+
+                        <p class="text-xs text-gray-500 mt-1">
+                            {{ \Carbon\Carbon::parse($visit->date)->format('d M Y H:i') }}
+                        </p>
+                    </div>
+
+                    <div class="text-right">
+                        <p class="text-lg font-semibold">
+                            {{-- IDR {{ number_format($visit->invoice->grand_total) }} --}}
+                        </p>
+                    </div>
+                </div>
+
+                {{-- Middle Section --}}
+                <div
+                    class="text-sm text-gray-700 font-semibold dark:text-gray-300 space-y-1 flex justify-between align-center mb-3">
+                    <div>
+                        <p>
+                            <span class="text-gray-400 font-normal">Dokter:</span>
+                            {{ $visit->practitioner->name ?? '-' }}
+                        </p>
+                        <p>
+                            <span class="text-gray-400 font-normal">No Kunjungan:</span>
+                            {{ $visit->visit_number ?? '-' }}
+                        </p>
+                    </div>
+                    </p>
+                </div>
+
+                {{-- Bottom Section --}}
+                <div class="flex justify-between items-center">
+                    <p
+                        class="text-xs {{ $visit->satusehat_encounter_id ? 'text-green-500' : 'text-slate-500' }} mt-1">
+                        {{ $visit->satusehat_encounter_id ? 'Tersinkron dengan SATUSEHAT' : 'Belum tersinkron dengan SATUSEHAT' }}
+                    </p>
+                    <p class="text-sm text-gray-800 capitalize">
+                        <span class="px-2 py-1 bg-brand-50 text-brand-800 text-xs rounded-full font-bold">
+                            {{ str($visit->internal_status)->headline() }}
+                        </span>
+                    </p>
+
+                    {{-- Actions --}}
+                    {{-- <div class="flex gap-4 text-sm">
+
+                            <a href="" class="text-yellow-500 active:scale-95 transition">
+                                Edit
+                            </a>
+
+                            <button wire:click="" class="text-red-600 active:scale-95 transition">
+                                Delete
+                            </button>
+                        </div> --}}
+                </div>
+            </div>
+        @endforeach
+        <x-pagination-compact :paginator="$outpatientVisits" />
+    </div>
 </div>
