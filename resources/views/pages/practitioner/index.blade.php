@@ -127,10 +127,12 @@ $statusColors = [
 
                 // Ambil warna berdasarkan status, jika tidak ada di list maka default ke orange
                 $borderColor = $statusColors[$visit->internal_status] ?? 'border-orange-500'; @endphp
-                class="bg-white dark:bg-zinc-800 rounded-2xl p-2 shadow-sm border border-l-8 {{ $borderColor }}">
+                class="cursor-pointer bg-white dark:bg-zinc-800 rounded-2xl p-2 shadow-sm border border-l-8 {{ $borderColor }}"
+                wire:click="startConsultation({{ $visit->id }})">
 
                 {{-- Top Section --}}
-                <div class="flex justify-between items-start mb-3">
+                <div class="flex
+                justify-between items-start mb-3">
                     <div>
                         <span class="font-semibold text-base leading-tight flex items-center gap-2">
                             {{ $visit->patient->name }}

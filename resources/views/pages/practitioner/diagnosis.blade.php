@@ -485,14 +485,18 @@ new class extends Component {
 
 <div>
     <x-header header="Diagnosa Pasien"
-        description="Kelola proses pemeriksaan medis secara komprehensif, mulai dari pencatatan anamnesa, tanda-tanda vital (TTV), hingga penetapan diagnosa ICD-10. Terintegrasi langsung dengan modul resep obat dan sistem SATUSEHAT untuk memastikan setiap keputusan klinis tercatat dalam rekam medis elektronik yang akurat dan legal." />
+        description="Kelola proses pemeriksaan medis secara komprehensif, mulai dari pencatatan anamnesa, tanda-tanda vital (TTV), hingga penetapan diagnosa ICD-10." />
 
-    <div class="max-w-8xl mx-auto py-2 px-4 sm:px-6 lg:px-6">
+    <div class="max-w-8xl mx-auto py-2 px-2 md:px-6 lg:px-6">
+
+        {{-- Header Info Pasien --}}
         <div class="bg-white border border-brand-200 shadow rounded-lg mb-4 overflow-hidden">
             <div class="bg-brand-600 px-4 py-3">
                 <h3 class="text-white font-bold">Pemeriksaan Pasien</h3>
             </div>
-            <div class="p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+
+            {{-- Desktop Version --}}
+            <div class="hidden md:grid p-4 grid-cols-4 gap-4">
                 <div>
                     <p class="text-xs text-gray-500 uppercase">Nama Pasien</p>
                     <p class="font-semibold">{{ $visit->patient->name }}</p>
@@ -510,433 +514,300 @@ new class extends Component {
                     <p class="font-semibold capitalize">{{ $visit->status }}</p>
                 </div>
             </div>
+
+            {{-- Mobile Version --}}
+            <div class="block md:hidden p-4 space-y-2">
+                <div class="flex justify-between border-b pb-1">
+                    <span class="text-xs text-gray-500">Nama</span>
+                    <span class="text-xs font-bold text-right">{{ $visit->patient->name }}</span>
+                </div>
+                <div class="flex justify-between border-b pb-1">
+                    <span class="text-xs text-gray-500">No. RM</span>
+                    <span class="text-xs font-bold font-mono">{{ $visit->patient->medical_record_number }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-xs text-gray-500">Status</span>
+                    <span
+                        class="text-[10px] px-2 bg-brand-100 text-brand-700 rounded-full font-bold uppercase">{{ $visit->status }}</span>
+                </div>
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="md:col-span-1">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+
+            {{-- KIRI: Vital Sign & Histori --}}
+            <div class="md:col-span-1 order-2 md:order-1">
+                {{-- Vital Signs Card --}}
                 <div class="bg-white border border-brand-200 shadow rounded-lg p-4">
-                    <h4 class="font-bold text-gray-700 border-b pb-2 mb-4">Vital Signs</h4>
+                    <h4 class="font-bold text-gray-700 border-b pb-2 mb-4 flex justify-between items-center">
+                        Vital Signs
+                        <span
+                            class="md:hidden text-[10px] bg-slate-100 px-2 py-0.5 rounded italic font-normal text-gray-400">Status
+                            Terkini</span>
+                    </h4>
                     @if ($visit->vitalSign)
-                        <div class="space-y-3">
-                            <div class="flex justify-between">
-                                <span class="text-gray-500">TD (Tensi)</span>
-                                <span
-                                    class="font-mono font-bold text-brand-600">{{ $visit->vitalSign->systole }}/{{ $visit->vitalSign->diastole }}
-                                    <small>mmHg</small></span>
+                        <div class="grid grid-cols-2 md:grid-cols-1 gap-y-3 gap-x-4">
+                            <div class="flex justify-between md:block">
+                                <span class="text-gray-500 text-xs md:text-sm">TD (Tensi)</span>
+                                <span class="block font-mono font-bold text-brand-600 text-sm md:text-base">
+                                    {{ $visit->vitalSign->systole }}/{{ $visit->vitalSign->diastole }}
+                                    <small>mmHg</small>
+                                </span>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-500">Berat Badan</span>
-                                <span class="font-bold">{{ $visit->vitalSign->weight ?? '-' }} <small>kg</small></span>
+                            <div class="flex justify-between md:block">
+                                <span class="text-gray-500 text-xs md:text-sm">BB / TB</span>
+                                <span class="block font-bold text-sm md:text-base">
+                                    {{ $visit->vitalSign->weight ?? '-' }} <small>kg</small> /
+                                    {{ $visit->vitalSign->height ?? '-' }} <small>cm</small>
+                                </span>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-500">Tinggi Badan</span>
-                                <span class="font-bold">{{ $visit->vitalSign->height ?? '-' }} <small>cm</small></span>
-                            </div>
-                            <div class="flex justify-between border-t pt-2">
-                                <span class="text-gray-500 text-sm">Suhu Tubuh</span>
-                                <span class="font-bold text-brand-500">{{ $visit->vitalSign->temperature ?? '-' }}
-                                    <small>°C</small></span>
+                            <div class="flex justify-between md:block col-span-2 border-t pt-2">
+                                <span class="text-gray-500 text-xs md:text-sm">Suhu Tubuh</span>
+                                <span class="block font-bold text-brand-500 text-sm md:text-base">
+                                    {{ $visit->vitalSign->temperature ?? '-' }} <small>°C</small>
+                                </span>
                             </div>
                         </div>
                     @else
                         <p class="text-sm italic text-gray-400">Data vital sign belum tersedia.</p>
                     @endif
                 </div>
+
+                {{-- Histori Pasien --}}
                 <div class="bg-white border border-brand-200 shadow rounded-lg p-1.5 mt-4">
                     <h4 class="font-bold text-gray-700 px-2 py-2 mb-1">Histori Pasien</h4>
-                    <div class="space-y-3">
+                    <div class="max-h-[400px] overflow-y-auto space-y-3 p-1">
                         @forelse ($histories as $history)
                             <div
-                                class="border border-gray-200 rounded-lg p-4 bg-slate-50 border-l-8 border-l-green-500">
-                                <div class="flex justify-between text-sm mb-4">
+                                class="border border-gray-200 rounded-lg p-3 bg-slate-50 border-l-4 md:border-l-8 border-l-green-500 shadow-sm">
+                                <div class="flex justify-between text-[10px] md:text-sm mb-2">
                                     <span
-                                        class="text-gray-500">{{ Carbon::parse($history->started_at)->format('d M Y H:i') }}</span>
-                                    <span class="font-semibold capitalize">{{ $history->status }}</span>
+                                        class="text-gray-500">{{ Carbon::parse($history->started_at)->format('d M Y') }}</span>
+                                    <span class="font-semibold uppercase text-green-600">{{ $history->status }}</span>
                                 </div>
-                                <div class="p-2 bg-white border border-slate-200 rounded-lg mb-2">
-                                    <div class="flex justify-between mb-0">
-                                        <span class="text-gray-500 font-semibold text-sm">Diagnosa</span>
-                                    </div>
-                                    @forelse($history->diagnoses as $diagnosis)
-                                        <span
-                                            class="text-xs px-2 py-0.5 bg-green-100 text-slate-600 rounded-full">{{ $diagnosis->is_primary ? 'Primary' : '' }}</span>
-                                        <span
-                                            class="text-xs px-2 py-0.5  text-slate-600 rounded">{{ $diagnosis->icd10_code }}</span>
-                                        <span
-                                            class="text-xs px-2 py-0.5  text-slate-600">{{ $diagnosis->icd10_display }}</span>
-                                    @empty
-                                    @endforelse
-                                </div>
-                                <div class="p-2 bg-white border border-slate-200 rounded-lg">
-                                    <div class="flex justify-between mt-2 mb-0">
-                                        <span class="text-gray-500 font-semibold text-sm">Obat</span>
-                                    </div>
-                                    @forelse($history->prescriptions as $prescription)
-                                        <span
-                                            class="text-xs px-2 py-0.5  text-slate-600 rounded">{{ $prescription->medicine->kfa_code }}
-                                            - {{ $prescription->medicine_name }}</span>
-                                        <div class="text-xs pl-6 pr-2 py-0.5  text-slate-600">
-                                            {{ $prescription->qty_dispensed }} vial - {{ $prescription->instruction }}
+                                <div class="p-2 bg-white border border-slate-100 rounded mb-2">
+                                    <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">Diagnosa</p>
+                                    @foreach ($history->diagnoses as $diagnosis)
+                                        <div class="text-xs mb-1">
+                                            <span
+                                                class="font-bold text-brand-700">[{{ $diagnosis->icd10_code }}]</span>
+                                            <span
+                                                class="text-gray-600 leading-tight">{{ Str::limit($diagnosis->icd10_display, 40) }}</span>
                                         </div>
-
-                                    @empty
-                                    @endforelse
+                                    @endforeach
                                 </div>
                             </div>
                         @empty
-                            <p class="text-sm italic text-gray-400">Tidak ada riwayat diagnosa pasien.</p>
+                            <p class="text-sm italic text-gray-400 p-2">Tidak ada riwayat.</p>
                         @endforelse
                     </div>
                 </div>
-
             </div>
 
-            <div class="md:col-span-2">
-                <div>
-                    <div class="bg-white border border-brand-200 shadow rounded-lg p-6">
+            {{-- KANAN: Input Diagnosa & Resep --}}
+            <div class="md:col-span-2 order-1 md:order-2 space-y-4">
 
-                        <h4 class="font-bold text-gray-700 mb-4 flex items-center">
-                            <svg class="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path
-                                    d="M10 2a8 8 0 100 16 8 8 0 000-16zM7 9a1 1 0 112 0v4a1 1 0 11-2 0V9zm5-1a1 1 0 100 2h.01a1 1 0 100-2H12z" />
-                            </svg>Input Diagnosa (ICD-10)
-                        </h4>
+                {{-- Input Diagnosa --}}
+                <div class="bg-white border border-brand-200 shadow rounded-lg p-4 md:p-6">
+                    <h4 class="font-bold text-gray-700 mb-4 flex items-center">
+                        <x-icon name="clipboard-document-check" class="w-5 h-5 mr-2 text-red-500" />
+                        Diagnosa (ICD-10)
+                    </h4>
 
-                        <div class="relative" x-data="{ open: true }">
-                            <x-input type="search" wire:model.live="search" @input="open = true" :disabled="$visit->status === 'finished'"
-                                name="search" placeholder="Ketik kode ICD-10 atau nama penyakit..." name="search" />
+                    <div class="relative" x-data="{ open: true }">
+                        <x-input type="search" name="search" wire:model.live="search" @input="open = true"
+                            :disabled="$visit->status === 'finished'" placeholder="Ketik kode ICD-10 atau nama penyakit..." class="w-full" />
 
-                            @if (count($icdResults) > 0)
-                                <div x-show="open"
-                                    class="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-xl overflow-hidden">
-                                    @foreach ($icdResults as $res)
-                                        <button wire:click="selectIcd10({{ $res->id }})" @click="open = false"
-                                            class="w-full text-left px-4 py-3 hover:bg-brand-50 border-b last:border-0">
-                                            <span class="font-bold text-brand-700">[{{ $res->code }}]</span>
-                                            <span class="text-sm text-gray-700">{{ $res->name_en }}</span>
-                                        </button>
-                                    @endforeach
-                                </div>
-                            @endif
-                        </div>
+                        @if (count($icdResults) > 0)
+                            <div x-show="open"
+                                class="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-xl max-h-60 overflow-y-auto">
+                                @foreach ($icdResults as $res)
+                                    <button wire:click="selectIcd10({{ $res->id }})" @click="open = false"
+                                        class="w-full text-left px-4 py-3 hover:bg-brand-50 border-b last:border-0 text-sm">
+                                        <span class="font-bold text-brand-700">[{{ $res->code }}]</span>
+                                        {{ $res->name_en }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
 
-                        <div class="mt-4 flex items-center justify-between">
-                            <x-toggle name="isPrimary" checked="isPrimary" wire:model="isPrimary"
-                                label="Diagnosa Utama" />
+                    <div class="mt-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+                        <x-toggle name="isPrimary" wire:model="isPrimary" label="Diagnosa Utama" />
+                        <x-button wire:click="addDiagnosis" variant="brand" class="w-full md:w-auto" :disabled="$visit->status === 'finished'">
+                            Tambah Diagnosa
+                        </x-button>
+                    </div>
 
-                            <x-button wire:click="addDiagnosis" variant="brand" :disabled="$visit->status === 'finished'">
-                                Tambah ke Daftar
-                            </x-button>
-                        </div>
-
-                        <div class="mt-8">
-                            <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b mb-3 pb-1">
-                                Daftar
-                                Diagnosa Pasien</h5>
-                            <div class="space-y-3">
-                                @foreach ($visit->diagnoses as $diag)
-                                    <div wire:key="diag-{{ $diag->id }}"
-                                        class="flex items-center justify-between p-3 {{ $diag->is_primary ? 'bg-green-50 border-brand-200' : 'bg-gray-50 border-gray-200' }} rounded-lg border transition-all">
-                                        <div class="flex items-center space-x-3">
+                    {{-- List Diagnosa --}}
+                    <div class="mt-6">
+                        <h5 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b mb-3 pb-1">
+                            Daftar Diagnosa Aktif</h5>
+                        <div class="space-y-2">
+                            @foreach ($visit->diagnoses as $diag)
+                                <div
+                                    class="flex flex-col md:flex-row md:items-center justify-between p-3 {{ $diag->is_primary ? 'bg-green-50 border-brand-200' : 'bg-gray-50 border-gray-200' }} rounded-lg border gap-2">
+                                    <div class="flex items-start md:items-center space-x-2 md:space-x-3">
+                                        <span
+                                            class="px-2 py-0.5 bg-white border border-gray-300 text-gray-700 rounded text-[10px] font-mono font-bold">{{ $diag->icd10_code }}</span>
+                                        <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
                                             <span
-                                                class="px-2 py-1 bg-white border border-gray-300 text-gray-700 rounded text-xs font-mono font-bold">{{ $diag->icd10_code }}</span>
-                                            <span
-                                                class="text-sm font-medium text-gray-800">{{ $diag->icd10_display }}</span>
+                                                class="text-xs md:text-sm font-medium text-gray-800">{{ $diag->icd10_display }}</span>
                                             @if ($diag->is_primary)
                                                 <span
-                                                    class="text-[10px] bg-orange-600 text-white px-2 py-0.5 rounded-full uppercase font-extrabold tracking-tighter">Primary</span>
-                                            @endif
-                                        </div>
-
-                                        <div class="flex items-center gap-2">
-                                            @if ($diag->satusehat_condition_id)
-                                                <span
-                                                    class="text-[10px] text-green-600 font-bold flex items-center bg-green-50 px-2 py-1 rounded">
-                                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path
-                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
-                                                    </svg>
-                                                    SYNCED
-                                                </span>
-                                            @else
-                                                @if (!$diag->is_primary)
-                                                    <button wire:click="setAsPrimary({{ $diag->id }})"
-                                                        class="text-[11px] text-brand-600 hover:text-brand-800 font-semibold px-2 py-1 border border-brand-200 rounded hover:bg-brand-100 transition">
-                                                        Jadikan Utama
-                                                    </button>
-                                                @endif
-
-                                                <button
-                                                    wire:click="confirmingDeleteDiagnosis({{ $diag->id }}, 'diagnosa')"
-                                                    class="text-red-400 hover:text-red-600 p-1" title="Hapus">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                                                        </path>
-                                                    </svg>
-                                                </button>
+                                                    class="w-fit text-[9px] bg-orange-600 text-white px-2 py-0.5 rounded-full uppercase font-black">Primary</span>
                                             @endif
                                         </div>
                                     </div>
-                                @endforeach
 
-                                @if ($visit->diagnoses->isEmpty())
-                                    <div class="text-center py-6 border-2 border-dashed border-gray-200 rounded-lg">
-                                        <p class="text-sm text-gray-400 italic">Belum ada diagnosa yang ditambahkan.
-                                        </p>
+                                    <div
+                                        class="flex items-center justify-end gap-2 border-t md:border-t-0 pt-2 md:pt-0">
+                                        @if (!$diag->satusehat_condition_id)
+                                            @if (!$diag->is_primary)
+                                                <button wire:click="setAsPrimary({{ $diag->id }})"
+                                                    class="text-[10px] text-brand-600 font-bold px-2 py-1 border border-brand-200 rounded hover:bg-brand-100">Jadikan
+                                                    Utama</button>
+                                            @endif
+                                            <button
+                                                wire:click="confirmingDeleteDiagnosis({{ $diag->id }}, 'diagnosa')"
+                                                class="text-red-400 p-1">
+                                                <x-icon name="trash" class="w-4 h-4" />
+                                            </button>
+                                        @else
+                                            <span
+                                                class="text-[9px] text-green-600 font-bold flex items-center bg-green-100 px-2 py-1 rounded">
+                                                <x-icon name="check-circle" class="w-3 h-3 mr-1" /> SYNCED
+                                            </span>
+                                        @endif
                                     </div>
-                                @endif
-                            </div>
-
+                                </div>
+                            @endforeach
                         </div>
                     </div>
                 </div>
-                <div class="bg-white border border-brand-200 shadow rounded-lg p-6 mt-4">
+
+                {{-- Resep Obat --}}
+                <div class="bg-white border border-brand-200 shadow rounded-lg p-4 md:p-6">
                     <h4 class="font-bold text-gray-700 mb-4 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                                d="M10 2a8 8 0 100 16 8 8 0 000-16zM7 9a1 1 0 112 0v4a1 1 0 11-2 0V9zm5-1a1 1 0 100 2h.01a1 1 0 100-2H12z" />
-                        </svg>
-                        Resep Obat (KFA)
+                        <x-icon name="beaker" class="w-5 h-5 mr-2 text-red-500" /> Resep Obat (KFA)
                     </h4>
 
-                    {{-- Search Obat --}}
-                    <div class="relative col-span-2" x-data="{ open: false }">
-                        <x-input type="search" wire:model.live.debounce.500ms="medicineSearch" @input="open = true"
-                            @focus="open = true" name="medicineSearch"
-                            placeholder="Cari obat di KFA (Nama atau Kode)..." :disabled="$visit->status === 'finished'" />
+                    <div class="relative" x-data="{ open: false }">
+                        <x-input name="medicine" type="search" wire:model.live.debounce.500ms="medicineSearch"
+                            @input="open = true" @focus="open = true" placeholder="Cari obat (Nama/Kode)..."
+                            :disabled="$visit->status === 'finished'" />
 
                         @if (!empty($selectedMedicineData))
-                            <div class="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-gray-700">
-                                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                                    <div>
-                                        <div class="text-xs uppercase text-slate-500">KFA Code</div>
-                                        <div class="font-semibold">{{ $selectedMedicineData['kfa_code'] }}</div>
-                                    </div>
-                                    <div class="col-span-2">
-                                        <div class="text-xs uppercase text-slate-500">Nama Obat</div>
-                                        <div class="font-semibold">{{ $selectedMedicineData['name'] }}</div>
-                                    </div>
-                                    <div>
-                                        <div class="text-xs uppercase text-slate-500">Manufacturer</div>
-                                        <div class="font-semibold">{{ $selectedMedicineData['manufacturer'] ?? '-' }}
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="mt-2 p-2 bg-slate-50 border border-slate-200 rounded text-xs">
+                                <span class="font-bold text-brand-600">{{ $selectedMedicineData['kfa_code'] }}</span>
+                                - {{ $selectedMedicineData['name'] }}
                             </div>
                         @endif
 
                         @if (count($kfaResults) > 0)
                             <div x-show="open" @click.away="open = false"
-                                class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl overflow-hidden max-h-80 overflow-y-auto">
-
+                                class="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-2xl max-h-60 overflow-y-auto">
                                 @foreach ($kfaResults as $res)
-                                    <button type="button"
-                                        wire:click="selectMedicineFromKfa('{{ $res['kfa_code'] }}')"
+                                    <button wire:click="selectMedicineFromKfa('{{ $res['kfa_code'] }}')"
                                         @click="open = false"
-                                        class="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-gray-50 last:border-0 transition-colors duration-150 group">
-                                        <div class="flex flex-col">
-                                            <div class="flex justify-between items-start mb-1">
-                                                <span
-                                                    class="text-[10px] font-mono font-bold px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">
-                                                    {{ $res['kfa_code'] }}
-                                                </span>
-                                                @if (isset($res['manufacturer']))
-                                                    <span
-                                                        class="text-[10px] uppercase tracking-wider font-semibold text-brand-600">
-                                                        {{ $res['manufacturer'] }}
-                                                    </span>
-                                                @endif
-                                            </div>
-
-                                            <span
-                                                class="text-sm font-semibold text-gray-800 group-hover:text-brand-700 leading-tight">
-                                                {{ $res['name'] }}
-                                            </span>
-                                        </div>
+                                        class="w-full text-left px-4 py-2 hover:bg-slate-50 border-b text-xs">
+                                        <p class="font-bold text-brand-700">{{ $res['kfa_code'] }}</p>
+                                        <p class="text-gray-800">{{ $res['name'] }}</p>
                                     </button>
                                 @endforeach
                             </div>
                         @endif
                     </div>
 
-                    <div class="space-y-5 mt-3 p-6 border border-gray-200 rounded-lg bg-slate-50">
-
-                        {{-- Frekuensi --}}
-                        <div>
-                            <p class="text-xs font-medium uppercase tracking-wide text-gray-400 mb-2">Frekuensi</p>
-                            <div class="flex flex-wrap gap-2">
-                                @foreach ($opsi['frekuensi'] as $item)
-                                    <button type="button" wire:click="$set('frekuensi', '{{ $item }}')"
-                                        @class([
-                                            'px-4 py-1.5 rounded-full text-sm border transition',
-                                            'bg-green-200/80 border-brand-400 text-brand-700 font-medium' =>
-                                                $frekuensi === $item,
-                                            'bg-white border-gray-200 text-gray-600 hover:bg-gray-50' =>
-                                                $frekuensi !== $item,
-                                        ])>
-                                        {{ $item }}× sehari
-                                    </button>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        {{-- Waktu Makan --}}
-                        <div>
-                            <p class="text-xs font-medium uppercase tracking-wide text-gray-400 mb-2">Waktu makan</p>
-                            <div class="flex flex-wrap gap-2">
-                                @foreach ($opsi['waktuMakan'] as $item)
-                                    <button type="button" wire:click="$set('waktuMakan', '{{ $item }}')"
-                                        @class([
-                                            'px-4 py-1.5 rounded-full text-sm border transition',
-                                            'bg-green-200/80 border-brand-400 text-brand-700 font-medium' =>
-                                                $waktuMakan === $item,
-                                            'bg-white border-gray-200 text-gray-600 hover:bg-gray-50' =>
-                                                $waktuMakan !== $item,
-                                        ])>
-                                        {{ ucfirst($item) }}
-                                    </button>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        {{-- Waktu Hari --}}
-                        <div>
-                            <p class="text-xs font-medium uppercase tracking-wide text-gray-400 mb-1">
-                                Waktu hari
-                                <span class="normal-case text-gray-300 tracking-normal font-normal">(opsional, bisa
-                                    lebih dari satu)</span>
-                            </p>
-                            <div class="flex flex-wrap gap-2">
-                                @foreach ($opsi['waktuHari'] as $item)
-                                    <button type="button" wire:click="toggleWaktuHari('{{ $item }}')"
-                                        @class([
-                                            'px-4 py-1.5 rounded-full text-sm border transition',
-                                            'bg-green-200/80 border-brand-400 text-brand-700 font-medium' => in_array(
-                                                $item,
-                                                $waktuHari),
-                                            'bg-white border-gray-200 text-gray-600 hover:bg-gray-50' => !in_array(
-                                                $item,
-                                                $waktuHari),
-                                        ])>
-                                        {{ ucfirst($item) }}
-                                    </button>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        {{-- Jumlah & Satuan --}}
-                        <div>
-                            <p class="text-xs font-medium uppercase tracking-wide text-gray-400 mb-2">Jumlah & satuan
-                            </p>
-                            <div class="flex items-center gap-3 flex-wrap">
-                                <input type="number" wire:model.live="jumlah" min="0.5" step="0.5"
-                                    class="w-20 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-300" />
-                                <div class="flex flex-wrap gap-2">
-                                    @foreach ($opsi['satuan'] as $item)
-                                        <button type="button" wire:click="$set('satuan', '{{ $item }}')"
+                    {{-- Builder Aturan Pakai --}}
+                    <div class="mt-4 p-3 md:p-5 border border-gray-100 rounded-xl bg-slate-50/50 space-y-4">
+                        {{-- Mobile optimized selector --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase mb-2">Frekuensi & Waktu</p>
+                                <div class="flex flex-wrap gap-1.5">
+                                    @foreach ($opsi['frekuensi'] as $item)
+                                        <button wire:click="$set('frekuensi', '{{ $item }}')"
                                             @class([
-                                                'px-4 py-1.5 rounded-full text-sm border transition',
-                                                'bg-green-200/80 border-brand-400 text-brand-700 font-medium' =>
-                                                    $satuan === $item,
-                                                'bg-white border-gray-200 text-gray-600 hover:bg-gray-50' =>
-                                                    $satuan !== $item,
+                                                'text-[11px] px-3 py-1 rounded-full border transition',
+                                                'bg-brand-600 text-white border-brand-600' => $frekuensi === $item,
+                                                'bg-white text-gray-600 border-gray-200' => $frekuensi !== $item,
                                             ])>
-                                            {{ ucfirst($item) }}
+                                            {{ $item }}x
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase mb-2">Makan</p>
+                                <div class="flex flex-wrap gap-1.5">
+                                    @foreach ($opsi['waktuMakan'] as $item)
+                                        <button wire:click="$set('waktuMakan', '{{ $item }}')"
+                                            @class([
+                                                'text-[11px] px-3 py-1 rounded-full border transition',
+                                                'bg-brand-600 text-white border-brand-600' => $waktuMakan === $item,
+                                                'bg-white text-gray-600 border-gray-200' => $waktuMakan !== $item,
+                                            ])>
+                                            {{ $item }}
                                         </button>
                                     @endforeach
                                 </div>
                             </div>
                         </div>
 
-                        {{-- Divider --}}
-                        <div class="border-t border-gray-100"></div>
-
-                        {{-- Preview Hasil --}}
-                        <div class="flex items-center justify-between bg-slate-200 rounded-xl px-4 py-3">
-                            <div>
-                                <p class="font-medium text-gray-800">{{ $this->hasil }}</p>
-                                <p class="text-xs text-gray-400 mt-0.5">Preview aturan pakai</p>
+                        <div class="flex flex-col md:flex-row gap-3 pt-3 border-t border-gray-200">
+                            <div class="flex-1">
+                                <x-input name="instruction" type="text" wire:model="instruction"
+                                    placeholder="Aturan Pakai Manual/Preview"
+                                    class="text-sm font-bold text-brand-700 bg-white" />
                             </div>
-                            <button type="button" wire:click="gunakan"
-                                class="text-sm px-4 py-1.5 rounded-lg bg-brand-600 text-white hover:bg-brand-700 transition font-medium">
-                                Gunakan
-                            </button>
+                            <div class="flex gap-2">
+                                <x-input name="qty" type="number" wire:model="qty" placeholder="Qty"
+                                    class="w-20" />
+                                <x-button wire:click="addPrescription" variant="red"
+                                    class="flex-1 md:flex-none">Tambah</x-button>
+                            </div>
                         </div>
-
                     </div>
 
-
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-4">
-                        <x-input type="number" wire:model="qty" placeholder="Qty" name="qty_ordered"
-                            :disabled="$visit->status === 'finished'" />
-                        <div class="col-span-3">
-                            <x-input type="text" wire:model="instruction" name="instruction"
-                                placeholder="Aturan Pakai" :disabled="$visit->status === 'finished'" />
-                        </div>
-                        <x-button wire:click="addPrescription" variant="red" :disabled="$visit->status === 'finished'">
-                            Tambah
-                        </x-button>
-                    </div>
-
-                    {{-- Daftar Resep yang sudah ditambah --}}
-                    <div class="mt-8 space-y-2">
-                        <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b mb-3 pb-1">
-                            Daftar
-                            Obat Pasien</h5>
+                    {{-- List Resep --}}
+                    <div class="mt-6 space-y-2">
+                        <h5 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b mb-3 pb-1">
+                            Daftar Resep</h5>
                         @foreach ($visit->prescriptions as $pres)
-                            @php
-                                $statusClasses = match ($pres->status) {
-                                    'sent_to_pharmacy' => 'border-l-orange-500 bg-orange-50/30',
-                                    'pharmacy_processing', 'sent-for-payment' => 'border-l-yellow-400 bg-yellow-50/30',
-                                    'dispensed' => 'border-l-emerald-500 bg-emerald-50/30',
-                                    default => 'border-l-gray-300 bg-gray-50',
-                                };
-                            @endphp
                             <div
-                                class="flex justify-between items-center p-3 border-l-8 {{ $statusClasses }} border-y border-r rounded-lg shadow-sm transition-colors">
-                                <div>
-                                    <span class="font-bold text-gray-800">{{ $pres->medicine->kfa_code }} -
-                                        {{ $pres->medicine->name }}</span>
-                                    <span class="text-sm text-gray-500 ml-2">({{ $pres->qty_ordered }}
-                                        {{ $pres->medicine->unit ?? 'pcs' }} -
-                                        {{ $pres->medicine->form_type }})</span>
-                                    <p class="text-xs text-red-600 italic">{{ $pres->instruction }}</p>
+                                class="flex justify-between items-center p-3 border-l-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                                <div class="max-w-[80%]">
+                                    <p class="text-xs font-bold text-gray-800 leading-tight">
+                                        {{ $pres->medicine->name }}</p>
+                                    <p class="text-[10px] text-gray-500 font-mono">{{ $pres->qty_ordered }}
+                                        {{ $pres->medicine->unit ?? 'pcs' }}</p>
+                                    <p class="text-[11px] text-red-600 italic font-medium">{{ $pres->instruction }}
+                                    </p>
                                 </div>
                                 <button wire:click="confirmingDeletePrescription({{ $pres->id }})"
-                                    class="text-red-400 hover:text-red-600">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                                        </path>
-                                    </svg>
+                                    class="text-red-400 p-1">
+                                    <x-icon name="trash" class="w-4 h-4" />
                                 </button>
                             </div>
                         @endforeach
-                        @if ($visit->prescriptions->isEmpty())
-                            <div class="text-center py-6 border-2 border-dashed border-gray-200 rounded-lg">
-                                <p class="text-sm text-gray-400 italic">Belum ada resep yang ditambahkan.</p>
-                            </div>
-                        @endif
                     </div>
                 </div>
-                <div class="mt-4 pt-4 flex justify-end">
+
+                {{-- Action Button --}}
+                <div class="sticky bottom-4 md:static pb-4">
                     <x-button wire:click="syncAllToSatuSehat" wire:loading.attr="disabled"
-                        wire:target="syncAllToSatuSehat" {{-- TAMBAHKAN INI --}} :disabled="$visit->status === 'finished'" variant="brand">
+                        class="w-full shadow-lg md:shadow-none py-3" variant="brand" :disabled="$visit->status === 'finished'">
                         <span wire:loading.remove wire:target="syncAllToSatuSehat">
                             {{ $visit->status === 'finished' ? 'Synced to SatuSehat' : 'Kirim Diagnosa ke SatuSehat' }}
                         </span>
-
-                        <span wire:loading wire:target="syncAllToSatuSehat">
-                            Memproses...
-                        </span>
+                        <span wire:loading wire:target="syncAllToSatuSehat">Memproses...</span>
                     </x-button>
                 </div>
             </div>
         </div>
     </div>
+
     <x-confirm wire:model="confirmDeletePrescription" title="Hapus obat"
         message="Apakah anda yakin ingin menghapus obat ini?" confirmText="Delete" action="deletePrescription" />
     <x-confirm wire:model="confirmDeleteDiagnosa" title="Hapus diagnosa"

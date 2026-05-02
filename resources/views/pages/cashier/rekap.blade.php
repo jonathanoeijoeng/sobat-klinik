@@ -79,109 +79,133 @@ new class extends Component {
 
 <div>
     @include('pages.cashier.route')
-    <div
-        class="flex justify-between pr-2  gap-2 items-center bg-white rounded-lg border border-gray-200 mb-3 w-full md:w-fit">
-        <div class="flex items-center gap-2">
-            <x-input type="date" wire:model.live="startDate" class="border-none focus:ring-0" name="start_date" />
-            <span class="text-gray-400">s/d</span>
-            <x-input type="date" wire:model.live="endDate" class="border-none focus:ring-0" name="end_date" />
+
+    {{-- Filter Tanggal: Dibuat Full Width di Mobile --}}
+    <div class="flex flex-col md:flex-row justify-between gap-3 mb-4">
+        <div
+            class="flex items-center justify-between bg-white rounded-lg border border-gray-200 px-2 py-1 w-full md:w-fit shadow-sm">
+            <div class="flex items-center gap-1">
+                <x-input type="date" wire:model.live="startDate" class="border-none focus:ring-0 text-sm"
+                    name="start_date" />
+                <span class="text-gray-400 text-xs font-bold">s/d</span>
+                <x-input type="date" wire:model.live="endDate" class="border-none focus:ring-0 text-sm"
+                    name="end_date" />
+            </div>
+
+            @if ($startDate || $endDate)
+                <button wire:click="resetFilters" class="text-red-500 hover:text-red-700 p-2">
+                    <x-icon name="x-circle" class="w-5 h-5" />
+                </button>
+            @endif
         </div>
 
-        @if ($startDate || $endDate)
-            <button wire:click="resetFilters" class="text-red-500 hover:text-red-700 p-1">
-                <x-icon name="x-circle" class="w-5 h-5" />
-            </button>
-        @endif
+        {{-- Widget Total Cepat (Hanya muncul di mobile di bagian atas) --}}
+        <div class="md:hidden bg-brand-500 p-3 rounded-lg text-white shadow-md flex justify-between items-center">
+            <span class="text-xs font-bold uppercase tracking-wider">Total Rekap</span>
+            <span class="text-lg font-black font-mono">IDR {{ number_format($totals->total_grand, 0, ',', ',') }}</span>
+        </div>
     </div>
 
-    <div class="border rounded-lg overflow-x-auto shadow-sm md:mx-0 md:px-0">
+    {{-- VIEW DESKTOP: Tabel Tradisional --}}
+    <div class="hidden md:block border rounded-lg overflow-hidden shadow-sm">
         <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-brand-500">
+            <thead class="bg-brand-600">
                 <tr>
-                    <th
-                        class="px-3 md:px-6 py-4 text-left text-xs md:text-sm font-bold text-white uppercase tracking-widest">
-                        Tanggal
-                    </th>
-                    <th
-                        class="px-3 md:px-6 py-4 text-left text-xs md:text-sm font-bold text-white uppercase tracking-widest">
-                        Nama</th>
-                    <th
-                        class="px-3 md:px-6 py-4 text-center text-xs md:text-sm font-bold text-white uppercase tracking-widest">
-                        Status</th>
-                    <th
-                        class="px-3 md:px-6 py-4 text-center text-xs md:text-sm font-bold text-white uppercase tracking-widest">
-                        Method</th>
-                    <th
-                        class="px-3 md:px-6 py-4 text-right text-xs md:text-sm font-bold text-white uppercase tracking-widest">
-                        Registration</th>
-                    <th
-                        class="px-3 md:px-6 py-4 text-right text-xs md:text-sm font-bold text-white uppercase tracking-widest">
-                        Dokter</th>
-                    <th
-                        class="px-3 md:px-6 py-4 text-right text-xs md:text-sm font-bold text-white uppercase tracking-widest">
-                        Obat</th>
-                    <th
-                        class="px-3 md:px-6 py-4 text-right text-xs md:text-sm font-bold text-white uppercase tracking-widest">
-                        Total</th>
+                    <th class="px-4 py-3 text-left text-sm font-bold text-white uppercase tracking-widest">Tanggal</th>
+                    <th class="px-4 py-3 text-left text-sm font-bold text-white uppercase tracking-widest">Nama</th>
+                    <th class="px-4 py-3 text-center text-sm font-bold text-white uppercase tracking-widest">
+                        Status/Method</th>
+                    <th class="px-4 py-3 text-right text-sm font-bold text-white uppercase tracking-widest">Regis</th>
+                    <th class="px-4 py-3 text-right text-sm font-bold text-white uppercase tracking-widest">Dokter</th>
+                    <th class="px-4 py-3 text-right text-sm font-bold text-white uppercase tracking-widest">Obat</th>
+                    <th class="px-4 py-3 text-right text-sm font-bold text-white uppercase tracking-widest">Total</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-                <tr class="bg-slate-200">
-                    <td colspan="4"
-                        class="px-3 md:px-6 py-4 text-center text-xs md:text-sm font-bold text-gray-900 uppercase tracking-widest">
-                        Total
+                <tr class="bg-slate-100 font-black">
+                    <td colspan="3" class="px-4 py-3 text-center text-sm uppercase tracking-widest">Total Keseluruhan
                     </td>
-                    <td class="px-3 md:px-6 py-4 text-right font-mono text-xs md:text-sm font-bold">
-                        IDR {{ number_format($totals->total_reg, 0, ',', ',') }}
-                    </td>
-                    <td class="px-3 md:px-6 py-4 text-right font-mono text-xs md:text-sm font-bold">
-                        IDR {{ number_format($totals->total_practitioner, 0, ',', ',') }}
-                    </td>
-                    <td class="px-3 md:px-6 py-4 text-right font-mono text-xs md:text-sm font-bold">
-                        IDR {{ number_format($totals->total_medicine, 0, ',', ',') }}
-                    </td>
-                    <td class="px-3 md:px-6 py-4 text-right font-mono text-xs md:text-sm font-bold">
-                        IDR {{ number_format($totals->total_grand, 0, ',', ',') }}
-                    </td>
+                    <td class="px-4 py-3 text-right font-mono text-sm">IDR
+                        {{ number_format($totals->total_reg, 0, ',', ',') }}</td>
+                    <td class="px-4 py-3 text-right font-mono text-sm">IDR
+                        {{ number_format($totals->total_practitioner, 0, ',', ',') }}</td>
+                    <td class="px-4 py-3 text-right font-mono text-sm">IDR
+                        {{ number_format($totals->total_medicine, 0, ',', ',') }}</td>
+                    <td class="px-4 py-3 text-right font-mono text-sm text-brand-600">IDR
+                        {{ number_format($totals->total_grand, 0, ',', ',') }}</td>
                 </tr>
                 @forelse ($invoices as $invoice)
-                    <tr>
-                        <td class=" px-3 md:px-6 py-4 text-center text-xs md:text-sm  capitalize">
-                            {{ Carbon::parse($invoice->created_at)->format('d M Y') }}
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="px-4 py-3 text-sm">{{ Carbon::parse($invoice->created_at)->format('d/m/y') }}</td>
+                        <td class="px-4 py-3 text-sm font-bold">{{ $invoice->outpatient_visit->patient->name }}</td>
+                        <td class="px-4 py-3 text-center text-[10px]">
+                            <span
+                                class="px-2 py-0.5 rounded bg-green-100 text-green-700 font-bold uppercase">{{ $invoice->payment_method }}</span>
                         </td>
-                        <td class=" px-3 md:px-6 py-4 text-xs md:text-sm">
-                            <div class=" text-gray-900">{{ $invoice->outpatient_visit->patient->name }}</div>
-                        </td>
-                        <td class=" px-3 md:px-6 py-4 text-center text-xs md:text-sm uppercase">
-                            {{ $invoice->payment_status }}
-                        </td>
-                        <td class=" px-3 md:px-6 py-4 text-center text-xs md:text-sm uppercase">
-                            {{ $invoice->payment_method }}
-                        </td>
-                        <td class=" px-3 md:px-6 py-4 text-right font-mono text-xs md:text-sm">
-                            IDR {{ number_format($invoice->registration_fee, 0, ',', ',') }}
-                        </td>
-                        <td class="px-3 md:px-6 py-4 text-right font-mono text-xs md:text-sm">
-                            IDR {{ number_format($invoice->practitioner_fee, 0, ',', ',') }}
-                        </td>
-                        <td class="px-3 md:px-6 py-4 text-right font-mono text-xs md:text-sm">
-                            IDR {{ number_format($invoice->medicine_total, 0, ',', ',') }}
-                        </td>
-                        <td class="px-3 md:px-6 py-4 text-right font-mono text-xs md:text-sm">
-                            IDR {{ number_format($invoice->grand_total, 0, ',', ',') }}
-                        </td>
+                        <td class="px-4 py-3 text-right font-mono text-sm">
+                            {{ number_format($invoice->registration_fee, 0, ',', ',') }}</td>
+                        <td class="px-4 py-3 text-right font-mono text-sm">
+                            {{ number_format($invoice->practitioner_fee, 0, ',', ',') }}</td>
+                        <td class="px-4 py-3 text-right font-mono text-sm">
+                            {{ number_format($invoice->medicine_total, 0, ',', ',') }}</td>
+                        <td class="px-4 py-3 text-right font-mono text-sm font-bold">
+                            {{ number_format($invoice->grand_total, 0, ',', ',') }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="px-3 md:px-6 py-4 text-center text-xs md:text-sm font-medium">
-                            <x-nodatafound />
-                        </td>
+                        <td colspan="7" class="px-6 py-10 text-center"><x-nodatafound /></td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
-    <div class="md:block hidden mt-4">
+
+    {{-- VIEW MOBILE: List Card --}}
+    <div class="md:hidden space-y-3">
+        @forelse ($invoices as $invoice)
+            <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase leading-none">
+                            {{ Carbon::parse($invoice->created_at)->format('d M Y') }}</p>
+                        <h4 class="font-bold text-slate-800">{{ $invoice->outpatient_visit->patient->name }}</h4>
+                    </div>
+                    <span
+                        class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-black uppercase border border-slate-200">
+                        {{ $invoice->payment_method }}
+                    </span>
+                </div>
+
+                {{-- Breakdowns --}}
+                <div class="grid grid-cols-3 gap-2 border-t border-b border-gray-50 py-2 mb-2">
+                    <div class="text-center">
+                        <p class="text-[9px] text-gray-400 uppercase">Regis</p>
+                        <p class="text-xs font-mono">{{ number_format($invoice->registration_fee, 0, ',', ',') }}</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-[9px] text-gray-400 uppercase">Dokter</p>
+                        <p class="text-xs font-mono">{{ number_format($invoice->practitioner_fee, 0, ',', ',') }}</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-[9px] text-gray-400 uppercase">Obat</p>
+                        <p class="text-xs font-mono">{{ number_format($invoice->medicine_total, 0, ',', ',') }}</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-gray-500 uppercase">Total Tagihan</span>
+                    <span class="text-sm font-black text-brand-600 font-mono">IDR
+                        {{ number_format($invoice->grand_total, 0, ',', ',') }}</span>
+                </div>
+            </div>
+        @empty
+            <div class="bg-white p-10 rounded-lg border border-dashed border-gray-300 text-center">
+                <x-nodatafound />
+            </div>
+        @endforelse
+    </div>
+
+    <div class="mt-4">
         {{ $invoices->links() }}
     </div>
 </div>

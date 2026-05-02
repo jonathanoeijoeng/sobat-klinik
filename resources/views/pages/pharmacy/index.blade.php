@@ -172,7 +172,7 @@ new class extends Component {
                             <tr>
                                 <th class="px-4 py-3">Nama Obat</th>
                                 <th class="w-32 px-4 py-3 text-center">Jumlah</th>
-                                <th class="px-4 py-3">Aturan Pakai</th>
+                                <th class="w-50 px-4 py-3">Aturan Pakai</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
@@ -185,7 +185,7 @@ new class extends Component {
                                         {{ number_format($item['qty_ordered'], 0, ',', ',') }}
                                         {{ $item->medicine->unit }}
                                     </td>
-                                    <td class="px-4 py-3 text-slate-600 italic text-xs">
+                                    <td class="px-4 py-3 text-slate-600 text-sm">
                                         {{ $item->instruction }}
                                     </td>
                                 </tr>
