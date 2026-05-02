@@ -91,26 +91,26 @@ services:
     depends_on:
       - sobat-klinik-app
 
-  sobat-klinik-reverb:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: sobat-klinik-reverb
-    restart: always
-    command: php artisan reverb:start --host=0.0.0.0 --port=8080
-    ports:
-      - "6003:8080"
-    environment:
-      - DB_HOST=sobat-klinik-db
-      - DB_PORT=5432
-    volumes:
-      - ./:/var/www
-    env_file:
-      - .env
-    networks:
-      - sobat-klinik-network
-    depends_on:
-      - sobat-klinik-app
+  # sobat-klinik-reverb:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: sobat-klinik-reverb
+  #   restart: always
+  #   command: php artisan reverb:start --host=0.0.0.0 --port=8080
+  #   ports:
+  #     - "6003:8080"
+  #   environment:
+  #     - DB_HOST=sobat-klinik-db
+  #     - DB_PORT=5432
+  #   volumes:
+  #     - ./:/var/www
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - sobat-klinik-network
+  #   depends_on:
+  #     - sobat-klinik-app
 
   sobat-klinik-tunnel:
     image: cloudflare/cloudflared:latest

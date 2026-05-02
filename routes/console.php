@@ -33,6 +33,6 @@ Artisan::command('outpatient-visits:refresh-seed', function () {
 
 Schedule::command('outpatient-visits:refresh-seed')
     ->sundays()
-    ->at('00:00')
+    ->at('03:00')
     ->timezone(config('app.timezone', 'Asia/Jakarta'))
     ->withoutOverlapping();
