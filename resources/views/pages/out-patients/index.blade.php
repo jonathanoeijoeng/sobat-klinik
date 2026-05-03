@@ -181,20 +181,20 @@ new class extends Component {
                     @forelse ($outpatientVisits as $visit)
                         <tr>
                             <td class=" px-6 py-4">
-                                <div class="font-medium text-gray-900">{{ $visit->patient->name }}</div>
+                                <div class=" text-gray-900">{{ $visit->patient->name }}</div>
                             </td>
-                            <td class=" px-6 py-4 text-center text-sm font-medium capitalize">
+                            <td class=" px-6 py-4 text-center text-sm  capitalize">
                                 {{ $visit->status }}</td>
-                            <td class=" px-6 py-4 text-center text-sm font-medium">
+                            <td class=" px-6 py-4 text-center text-sm ">
                                 {{ $visit->gender === 'female' ? 'Wanita' : 'Pria' }}</td>
-                            <td class=" px-6 py-4 text-center text-sm font-medium">
+                            <td class=" px-6 py-4 text-center text-sm ">
                                 {{ $visit->vitalSign->systole }}/{{ $visit->vitalSign->diastole }} mmHg </td>
-                            <td class=" px-6 py-4 text-center text-sm font-medium">
+                            <td class=" px-6 py-4 text-center text-sm ">
                                 {{ $visit->vitalSign->height }} cm /
                                 {{ number_format($visit->vitalSign->weight, 1, '.', ',') }} kg </td>
-                            <td class="px-6 py-4 text-center text-sm font-medium">
+                            <td class="px-6 py-4 text-center text-sm ">
                                 {{ $visit->complaint }} </td>
-                            {{-- <td class="px-12 py-4 text-right text-sm font-medium">
+                            {{-- <td class="px-12 py-4 text-right text-sm ">
                                 <a class="text-blue-600 hover:text-blue-900 cursor-pointer"
                                     {{ $visit->status === 'finished' ? 'disabled' : '' }}
                                     wire:click="startConsultation({{ $visit->id }})">{{ $visit->status === 'finished' ? 'Finished' : 'Input Diagnosa' }}</a>
@@ -202,7 +202,7 @@ new class extends Component {
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-4 text-center text-sm font-medium">
+                            <td colspan="7" class="px-6 py-4 text-center text-sm ">
                                 <x-nodatafound />
                             </td>
                         </tr>
@@ -340,7 +340,7 @@ $statusColors = [
                         </span>
 
                         <p class="text-xs text-gray-500 mt-1">
-                            {{ \Carbon\Carbon::parse($visit->date)->format('d M Y H:i') }}
+                            {{ \Carbon\Carbon::parse($visit->arrived_at)->format('d M Y H:i') }}
                         </p>
                     </div>
 

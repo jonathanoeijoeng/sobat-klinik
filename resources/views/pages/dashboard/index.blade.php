@@ -376,7 +376,7 @@ new class extends Component {
                             </span>
 
                             <p class="text-xs text-gray-500 mt-1">
-                                {{ \Carbon\Carbon::parse($visit->date)->format('d M Y H:i') }}
+                                {{ \Carbon\Carbon::parse($visit->arrived_at)->format('d M Y H:i') }}
                             </p>
                         </div>
 

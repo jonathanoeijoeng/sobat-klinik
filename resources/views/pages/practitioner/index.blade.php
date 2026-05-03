@@ -82,20 +82,20 @@ new class extends Component {
                     @forelse ($patients as $visit)
                         <tr>
                             <td class=" px-6 py-4">
-                                <div class="font-medium text-gray-900">{{ $visit->patient->name }}</div>
+                                <div class=" text-gray-900">{{ $visit->patient->name }}</div>
                             </td>
-                            <td class=" px-6 py-4 text-center text-sm font-medium">
+                            <td class=" px-6 py-4 text-center text-sm ">
                                 {{ $visit->gender === 'female' ? 'Wanita' : 'Pria' }}</td>
-                            <td class=" px-6 py-4 text-center text-sm font-medium">
+                            <td class=" px-6 py-4 text-center text-sm ">
                                 {{ $visit->vitalSign->systole }}/{{ $visit->vitalSign->diastole }} mmHg </td>
-                            <td class=" px-6 py-4 text-center text-sm font-medium">
+                            <td class=" px-6 py-4 text-center text-sm ">
                                 {{ $visit->vitalSign->height }} cm /
                                 {{ number_format($visit->vitalSign->weight, 1, '.', ',') }} kg </td>
-                            <td class="px-6 py-4 text-center text-sm font-medium">
+                            <td class="px-6 py-4 text-center text-sm ">
                                 {{ $visit->complaint }} </td>
-                            <td class=" px-6 py-4 text-center text-sm font-medium capitalize">
+                            <td class=" px-6 py-4 text-center text-sm  capitalize">
                                 {{ str($visit->internal_status)->headline() }}</td>
-                            <td class="px-12 py-4 text-right text-sm font-medium">
+                            <td class="px-12 py-4 text-right text-sm ">
                                 <a class="{{ $visit->internal_status === 'at_practitioner' ? 'text-orange-500 hover:text-orange-700' : 'text-green-500 hover:text-green-700' }} cursor-pointer"
                                     {{ $visit->status === 'finished' ? 'disabled' : '' }}
                                     wire:click="startConsultation({{ $visit->id }})">{{ $visit->internal_status === 'at_practitioner' ? 'Lanjutkan Diagnosa' : 'Mulai Diagnosa' }}</a>
@@ -139,7 +139,7 @@ $statusColors = [
                         </span>
 
                         <p class="text-xs text-gray-500 mt-1">
-                            {{ \Carbon\Carbon::parse($visit->date)->format('d M Y H:i') }}
+                            {{ \Carbon\Carbon::parse($visit->arrived_at)->format('d M Y H:i') }}
                         </p>
                     </div>
 
