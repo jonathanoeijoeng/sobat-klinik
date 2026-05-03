@@ -186,7 +186,7 @@ new class extends Component {
                             <td class=" px-6 py-4 text-center text-sm  capitalize">
                                 {{ $visit->status }}</td>
                             <td class=" px-6 py-4 text-center text-sm ">
-                                {{ $visit->gender === 'female' ? 'Wanita' : 'Pria' }}</td>
+                                {{ $visit->patient->gender === 'female' ? 'Wanita' : 'Pria' }}</td>
                             <td class=" px-6 py-4 text-center text-sm ">
                                 {{ $visit->vitalSign->systole }}/{{ $visit->vitalSign->diastole }} mmHg </td>
                             <td class=" px-6 py-4 text-center text-sm ">

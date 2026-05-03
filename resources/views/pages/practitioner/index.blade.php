@@ -85,7 +85,7 @@ new class extends Component {
                                 <div class=" text-gray-900">{{ $visit->patient->name }}</div>
                             </td>
                             <td class=" px-6 py-4 text-center text-sm ">
-                                {{ $visit->gender === 'female' ? 'Wanita' : 'Pria' }}</td>
+                                {{ $visit->patient->gender === 'female' ? 'Wanita' : 'Pria' }}</td>
                             <td class=" px-6 py-4 text-center text-sm ">
                                 {{ $visit->vitalSign->systole }}/{{ $visit->vitalSign->diastole }} mmHg </td>
                             <td class=" px-6 py-4 text-center text-sm ">
