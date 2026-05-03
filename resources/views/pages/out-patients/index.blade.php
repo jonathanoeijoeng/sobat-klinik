@@ -325,7 +325,7 @@ new class extends Component {
             <div @php
 $statusColors = [
                 'arrived'   => 'border-l-green-500',
-                'completed' => 'border-l-green-500',
+                'finished' => 'border-l-green-500',
                 ];
 
                 // Ambil warna berdasarkan status, jika tidak ada di list maka default ke orange

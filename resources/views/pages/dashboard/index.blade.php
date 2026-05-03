@@ -364,9 +364,17 @@ new class extends Component {
         </div>
         <div class="md:hidden space-y-4 pb-4 mt-6">
             @foreach ($visits as $visit)
-                <div
-                    class="bg-white dark:bg-zinc-800 rounded-2xl p-4 shadow-sm border
-                        {{ $visit->status === 'finished' ? 'border-green-200' : 'border-orange-200' }}">
+                <div @php
+$statusColors = [
+                'arrived'   => 'border-l-green-500',
+                'finished' => 'border-l-green-500',
+                ];
+
+                // Ambil warna berdasarkan status, jika tidak ada di list maka default ke orange
+                $borderColor = $statusColors[$visit->internal_status] ?? 'border-orange-500'; @endphp
+                    @endphp
+                    class="bg-white dark:bg-zinc-800 rounded-2xl p-4 shadow-sm border border-l-8 {{ $borderColor }}
+                        ">
 
                     {{-- Top Section --}}
                     <div class="flex justify-between items-start mb-3">

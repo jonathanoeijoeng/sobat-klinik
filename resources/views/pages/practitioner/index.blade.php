@@ -122,12 +122,12 @@ new class extends Component {
             <div @php
 $statusColors = [
                 'arrived'   => 'border-l-green-500',
-                'completed' => 'border-l-green-500',
+                'finished' => 'border-l-green-500',
                 ];
 
                 // Ambil warna berdasarkan status, jika tidak ada di list maka default ke orange
                 $borderColor = $statusColors[$visit->internal_status] ?? 'border-orange-500'; @endphp
-                class="cursor-pointer bg-white dark:bg-zinc-800 rounded-2xl p-2 shadow-sm border border-l-8 {{ $borderColor }}"
+                class="cursor-pointer bg-white dark:bg-zinc-800 rounded-2xl p-4 shadow-sm border border-l-8 {{ $borderColor }}"
                 wire:click="startConsultation({{ $visit->id }})">
 
                 {{-- Top Section --}}
