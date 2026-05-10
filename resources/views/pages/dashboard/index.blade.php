@@ -395,9 +395,9 @@ $statusColors = [
 
                             @endphp
 
-                            <div class="flex flex-wrap gap-2 justify-left">
+                            <div class="grid grid-cols-3 gap-1">
                                 <span @class([
-                                    'px-3 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
+                                    'px-2 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
                                     'bg-green-100 text-green-700 border-green-200' =>
                                         $visit->satusehat_encounter_id,
                                     'bg-gray-100 text-gray-400 border-gray-200 opacity-50' => !$visit->satusehat_encounter_id,
@@ -414,7 +414,7 @@ $statusColors = [
                                         $visit->vitalsign->satusehat_observation_temperature_id;
                                 @endphp
                                 <span @class([
-                                    'px-3 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
+                                    'px-2 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
                                     'bg-orange-100 text-orange-700 border-orange-200' => $obsSynced,
                                     'bg-gray-100 text-gray-400 border-gray-200 opacity-50' => !$obsSynced,
                                 ]) title="Observation (Vital Sign)">
@@ -429,7 +429,7 @@ $statusColors = [
                                             ->exists();
                                     @endphp
                                     <span @class([
-                                        'px-3 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
+                                        'px-2 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
                                         'bg-blue-100 text-blue-700 border-blue-200' => $diagSynced,
                                         'bg-gray-100 text-gray-400 border-gray-200 opacity-50' => !$diagSynced,
                                     ]) title="Condition (Diagnosis)">
@@ -450,7 +450,7 @@ $statusColors = [
                                     @endphp
 
                                     <span @class([
-                                        'px-3 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
+                                        'px-2 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
                                         'bg-purple-100 text-purple-700 border-purple-200' => $reqSynced,
                                         'bg-gray-100 text-gray-400 border-gray-200 opacity-50' => !$reqSynced,
                                     ]) title="Medication Request">
@@ -463,7 +463,7 @@ $statusColors = [
                                             $dispSynced = $prescription->satusehat_medication_dispense_id;
                                         @endphp
                                         <span @class([
-                                            'px-3 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
+                                            'px-2 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
                                             'bg-pink-100 text-pink-700 border-pink-200' => $dispSynced,
                                             'bg-gray-100 text-gray-400 border-gray-200 opacity-50' => !$dispSynced,
                                         ]) title="Medication Dispense">
