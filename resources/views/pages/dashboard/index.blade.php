@@ -389,14 +389,89 @@ $statusColors = [
                         </div>
 
                         <div class="text-right">
-                            <p class="text-lg font-semibold">
-                                IDR {{ number_format($visit->invoice->grand_total) }}
-                            </p>
-                            <p
-                                class="text-xs mt-1 font-medium
-                                    {{ $visit->invoice->payment_status === 'paid' ? 'text-green-600' : 'text-gray-400' }}">
-                                {{ $visit->invoice->payment_status === 'paid' ? 'Paid' : 'Unpaid' }}
-                            </p>
+                            @php
+                                $sync = $visit->getSatuSehatSyncStatus();
+                                $internalStatus = strtolower($visit->internal_status);
+
+                            @endphp
+
+                            <div class="flex flex-wrap gap-2 justify-left">
+                                <span @class([
+                                    'px-3 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
+                                    'bg-green-100 text-green-700 border-green-200' =>
+                                        $visit->satusehat_encounter_id,
+                                    'bg-gray-100 text-gray-400 border-gray-200 opacity-50' => !$visit->satusehat_encounter_id,
+                                ]) title="Encounter">
+                                    ENC
+                                </span>
+
+                                @php
+                                    $obsSynced =
+                                        $visit->vitalsign &&
+                                        $visit->vitalsign->satusehat_observation_blood_pressure_id &&
+                                        $visit->vitalsign->satusehat_observation_weight_id &&
+                                        $visit->vitalsign->satusehat_observation_height_id &&
+                                        $visit->vitalsign->satusehat_observation_temperature_id;
+                                @endphp
+                                <span @class([
+                                    'px-3 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
+                                    'bg-orange-100 text-orange-700 border-orange-200' => $obsSynced,
+                                    'bg-gray-100 text-gray-400 border-gray-200 opacity-50' => !$obsSynced,
+                                ]) title="Observation (Vital Sign)">
+                                    OBS
+                                </span>
+
+                                @if (in_array($internalStatus, ['sent_to_pharmacy', 'finished', 'dispensed']))
+                                    @php
+                                        $diagSynced = $visit
+                                            ->diagnoses()
+                                            ->whereNotNull('satusehat_condition_id')
+                                            ->exists();
+                                    @endphp
+                                    <span @class([
+                                        'px-3 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
+                                        'bg-blue-100 text-blue-700 border-blue-200' => $diagSynced,
+                                        'bg-gray-100 text-gray-400 border-gray-200 opacity-50' => !$diagSynced,
+                                    ]) title="Condition (Diagnosis)">
+                                        DIAG
+                                    </span>
+                                @endif
+
+                                @php
+                                    // Ambil data pertama dari relasi hasMany
+                                    $prescription = $visit->prescriptions->first();
+                                @endphp
+
+                                @if ($prescription)
+                                    @php
+                                        $reqSynced = $prescription->satusehat_medication_request_id;
+                                        // Cek apakah statusnya 'external'
+                                        $isExternal = strtolower($prescription->status) === 'external';
+                                    @endphp
+
+                                    <span @class([
+                                        'px-3 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
+                                        'bg-purple-100 text-purple-700 border-purple-200' => $reqSynced,
+                                        'bg-gray-100 text-gray-400 border-gray-200 opacity-50' => !$reqSynced,
+                                    ]) title="Medication Request">
+                                        RX
+                                    </span>
+
+                                    {{-- Tampilkan DISP hanya jika statusnya BUKAN external dan sudah dispensed --}}
+                                    @if (!$isExternal && $internalStatus === 'finished')
+                                        @php
+                                            $dispSynced = $prescription->satusehat_medication_dispense_id;
+                                        @endphp
+                                        <span @class([
+                                            'px-3 py-1 text-[10px] font-bold uppercase rounded-full border transition-all',
+                                            'bg-pink-100 text-pink-700 border-pink-200' => $dispSynced,
+                                            'bg-gray-100 text-gray-400 border-gray-200 opacity-50' => !$dispSynced,
+                                        ]) title="Medication Dispense">
+                                            DISP
+                                        </span>
+                                    @endif
+                                @endif
+                            </div>
                         </div>
                     </div>
 
